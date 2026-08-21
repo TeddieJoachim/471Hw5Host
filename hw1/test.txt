@@ -1,1 +1,3 @@
-Hello world, we are Theo and Andrew, we are learning version control
+Hello world
+We are Theo and Andrew
+We are learning version control
