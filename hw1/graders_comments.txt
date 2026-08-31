@@ -1,0 +1,24 @@
+Rubric (out of 50 points)
+
+25 points for having a repository set up, with the correct directory structure.  
+That is, 
+- (5/5) Top-level README file with adequate description, as laid out in assignment
+- (4/5) HW1 Readme file with adequate description, as laid out in assignment
+- (5/5) Correct directory structure (hw->report->PDF)
+- (5/5) hw1/test.txt  file
+- (5/5) Have they committed their work and provided a gradable hashtag?
+
+
+25 points for the report
+- (5/5) Is it PDF?  Created with Latex? 
+- (5/5) git log output present in report
+- (15/15) 2 or 3 different git diff commands should be present in the report, and correctly described as showing a difference between hashtags/commits
+
+
+Total: 49/50 HW1 Math/CS 471, Fall 2026 (Andrew Vargas and Tho Nichols)
+
+Comments:
+
+1. Your hw1/README.txt file does not tell anything about homework_template.tex and test.txt, also you wrote the name of your instructor instead of yours. (-1)
+
+
