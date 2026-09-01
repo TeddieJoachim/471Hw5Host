@@ -20,9 +20,17 @@ fcn_list = [f1]
 
 x0 = -0.5
 for fcn in fcn_list:
-    data = newton(fcn, x0)
+    data = newton(fcn, x0,100,10**-10)
 
     # Here, you can post-process data, and test convergence rates 
+    k_l = 0
+    k_q = 0
+    for i in range(len(data)):
+        if (i + 1 < len(data)):
+            k_l += abs(data[i+1]) / abs(data[i])
+            k_q += abs(data[i+1]) / ((abs(data[i])**2))
+    print(k_l)
+    print(k_q)
 
     # Also, use your skills from the last lab, and use savetxt() to dump 
     # data and/or convergence rates to a text file

@@ -1,6 +1,6 @@
 import numpy as np
 
-def newton(f, x0):
+def newton(f, x0, maxIter, tol):
     '''
     Newton's method of root finding
     
@@ -10,20 +10,20 @@ def newton(f, x0):
                   Interface for f:  f(x, 0)  returns f(x)
                                     f(x, 1)  returns f'(x)
     x0          : initial guess
-    <maxiter>   :
-    <tol>       :
+    maxIter     : the maximum number of iterations before the code halts, in 
+                  case Newton's does not converge in time
+    tol         : a tolerance such that the function will iterate until the 
+                  error is less than this tolerance
     
     output
     ------
     data   : array of approximate roots
     '''
     
-
-    maxiter = 10        # delete this line after you add a maxiter parameter
-    data = np.zeros((maxiter,1))
+    data = np.zeros((maxIter,1))
     x = x0
     
-    for i in range(maxiter):
+    for i in range(maxIter):
         xold = x
         x = x - f(x, 0)/f(x, 1)
         
@@ -33,8 +33,8 @@ def newton(f, x0):
         data[i,0] = x
 
         # Insert some logic for halting, if the tolerance is met
-        #if some_condition :
-        #   break
+        if (abs(x - xold) < tol):
+            break
     
     ##
     # end for-loop
