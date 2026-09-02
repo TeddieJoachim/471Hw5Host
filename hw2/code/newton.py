@@ -34,6 +34,7 @@ def newton(f, x0, maxIter, tol):
 
         # Insert some logic for halting, if the tolerance is met
         if (abs(x - xold) < tol):
+            print("Broke due to tolerance.")
             break
     
     ##

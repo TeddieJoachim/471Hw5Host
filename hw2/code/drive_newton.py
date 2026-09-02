@@ -40,13 +40,17 @@ for fcn in fcn_list:
     # Here, you can post-process data, and test convergence rates 
     k_l = 0
     k_q = 0
-    for i in range(len(data)):
-        if (i + 1 < len(data) & (abs(data[i] != 0))):
-            k_l = abs(data[i+1]) / abs(data[i])
-            k_q = abs(data[i+1]) / ((abs(data[i])**2))
+    errors = []
+
+    for i in range(len(data) - 1):
+        errors.append(abs(data[i+1] - data[i]))
+
+    for i in range(len(errors) -1):
+        k_l = errors[i+1] / errors[i]
+        k_q = errors[i+1] / (errors[i]**2)
             
-            print("Linear convergence ration: " + str(k_l))
-            print("Quadratic convergence ration: " + str(k_q))
+        print("Linear convergence ration: " + str(k_l))
+        print("Quadratic convergence ration: " + str(k_q))
 
     # Also, use your skills from the last lab, and use savetxt() to dump 
     # data and/or convergence rates to a text file
