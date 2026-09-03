@@ -31,7 +31,7 @@ for i in range(10):
     data[i,0] = x
     data[i,1] = e
 
-
+savetxt('data.tex', data, '%.5e', '  &  ', ' \\\\\n', header='', footer='', comments='# ', encoding=None)
 # Task 3:
 # - Your TASK is to dump data to a file and then import it into Latex
 # - Look up the "savetxt()" function online, or do this with ">>> savetxt?" inside of ipython, 
