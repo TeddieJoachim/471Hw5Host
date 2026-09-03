@@ -21,20 +21,20 @@ pyplot.plot(x,y)
 # As you update your figure, with new options, view it.  For instance, on a mac type 
 #    $ open -a preview lab1.png
 
-# pyplot.tick_params(labelsize='large')
+pyplot.tick_params(labelsize='large')
 
-# pyplot.xlabel(r'$X$', fontsize='large')
+pyplot.xlabel(r'$X$', fontsize='large')
 
-# Now, enter the right command for the ylabel using pyplot.ylabel(...)
+pyplot.ylabel(r'$X$', fontsize='large')
 
-# Reduce the number of xticks with "pyplot.xticks()"  
+currTicks = pyplot.xticks()[0]
+pyplot.xticks(currTicks[::2])
 # Use ">>> pyplot.xticks? " from inside of iPython to understand the interface 
 
 # Add a parameter to the legend command to make the fontsize large
-# pyplot.legend(['First Dataset']) 
+pyplot.legend(['First Dataset']) 
 
 pyplot.savefig('lab1.png', dpi=500, format='png', bbox_inches='tight', pad_inches=0.0,)
-
 
 # Task 3: Try pyplot.show() instead of pyplot.savefig()
 
