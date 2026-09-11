@@ -90,7 +90,10 @@ print("Initial guess v0:", v0)
 network_solution = multi_newton(f, jacobian, v0, 100, 10**(-10))
 
 print("Network solution:", network_solution)
-for k in range(0, len(network_solution)):
-  print("K " + str(k) + " Residual norm " + str(np.linalg.norm(f(network_solution[k]))))
+output = []
+for k in range(0, len(network_solution) - 1):
+    output.append(
+        f"${float(k):.8g}$ & ${float(np.linalg.norm(f(network_solution[k]))):.8g}$ \\\\")
 
-plot_network(A, np.array(network_solution[len(network_solution) - 1]))
+np.savetxt(f"multiNewtonIters.txt", output, fmt="%s")
+#plot_network(A, np.array(network_solution[len(network_solution) - 1]))
