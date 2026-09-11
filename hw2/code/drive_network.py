@@ -1,5 +1,6 @@
 import numpy as np
 from multi_newton import multi_newton 
+from plot_network import plot_network
 
 #8x6 matrix A
 A = np.array([
@@ -86,47 +87,10 @@ v0 = np.linalg.pinv(initial_matrix) @ s # computes req'd initial v guess using M
 
 print("Initial guess v0:", v0)
 
-#commit: added pseudoinverse initial voltage guess 
-
-# attempt to begin Newton's iteration.
-tol = 10**-10 # tolerance for convergence
-max_iter = 100 # maximum number of iterations
-
-v = v0.copy() # initialize v to the initial guess v0, using copy() to avoid modifying v0 in place.
-
-fv = f(v) # compute nonlin residual f(v) at the initial guess v0.
-
-# using linalg shown in class. 
-# computes the 2-norm of the residual vector f(v). gives one number, how far f(v) is from zero.
-residual_norm = np.linalg.norm(fv) 
-
-print("Initial residual norm:", residual_norm)
-# output: Initial residual norm: 0.20733046973419503
-# output matches values shown in Table 1 Newton iteration k = 0. SUCCESS!
-
-# commit: added Newton stopping params and init residual
-
-#
-J = jacobian(v) # compute Jacobian matrix J_f(v) at the initial guess v0.
-
-delta_v = np.linalg.pinv(J) @ fv # compute Newton correction
-
-v = v - delta_v # update voltage guess
-
-fv = f(v) # compute new residual
-residual_norm = np.linalg.norm(fv)
-
-print("Residual norm after one Newton step:", residual_norm)
-
-
-network_solution = multi_newton(
-    f,
-    jacobian,
-    v0,
-    max_iter,
-    tol
-)
+network_solution = multi_newton(f, jacobian, v0, 100, 10**(-10))
 
 print("Network solution:", network_solution)
 for k in range(0, len(network_solution)):
   print("K " + str(k) + " Residual norm " + str(np.linalg.norm(f(network_solution[k]))))
+
+plot_network(A, np.array(network_solution[len(network_solution) - 1]))
