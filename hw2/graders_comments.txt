@@ -13,7 +13,7 @@
    hw2/README.txt or hw2/README.md
 
 
-(44/45) points for the 1D Newton's Problems
+(45/45) points for the 1D Newton's Problems
 
    (25/25) points for code (5 points each)
    - New parameters added to Newton for user-defined tolerance and maxiter
@@ -34,7 +34,7 @@
         The section names don't need to be exactly "what", "how", "why", but the 
         structure should be similar
    - (7/7 pts) Report documents each of the coding tasks, even if only briefly
-   - (4/5 pts) Import Newton convergence data from file into Latex tables
+   - (5/5 pts) Import Newton convergence data from file into Latex tables
         (i.e., no copied and pasted data directly into the main report Latex file)
 
 
