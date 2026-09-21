@@ -1,0 +1,118 @@
+100 points total
+
+(10/10) points for structure of repository
+ - There must be directories, 
+    hw2 
+    hw2/report
+    hw2/code
+
+ - The report must be in
+    hw2/report/_some_report.pdf
+
+ - There must be readme file
+   hw2/README.txt or hw2/README.md
+
+
+(44/45) points for the 1D Newton's Problems
+
+   (25/25) points for code (5 points each)
+   - New parameters added to Newton for user-defined tolerance and maxiter
+
+   - Code halts correctly based on user-defined tolerance and maxiter
+
+   - Code tests for linear and quadratic convergence in some way, e.g., by
+     outputting the ratios for delta_{n+1} / delta_n  and delta_{n+1} / delta_n^2
+
+   - Code adds f(x) = x and f(x) = sin + cos^2
+
+   - Code measures convergence correctly for all three functions
+
+
+   (19/20) points for report
+   - (8/8 pts) Report is well-structured like in the template 
+     -- Cover page, and each task having a what/how/why description 
+        The section names don't need to be exactly "what", "how", "why", but the 
+        structure should be similar
+   - (7/7 pts) Report documents each of the coding tasks, even if only briefly
+   - (4/5 pts) Import Newton convergence data from file into Latex tables
+        (i.e., no copied and pasted data directly into the main report Latex file)
+
+
+
+
+(43/45) points for the Multi-Dimensional Newton's Problems
+
+   (20/25) points for code (5 points each)
+   - Multi-dimensional Newton's implemented, using pseudo-inverse 
+
+   - Code halts correctly based on user-defined tolerance and maxiter
+
+   - Code runs test for adjacency graph 1, with correct output 
+
+   - Code runs test for adjacency graph 2, with correct output
+
+
+   (20/20) points for report
+   - (4/4 pts) Report is well-structured like in the template 
+     -- Cover page, and each task having a what/how/why description 
+        The section names don't need to be exactly "what", "how", "why", but the 
+        structure should be similar
+   
+   - (4/4 pts) Report documents each of the coding tasks, even if only briefly
+              
+   - (4/4 pts) Report has the required plots and tables, where the tables are
+     inputting data from file 
+     -- This includes the solution plot and convergence table for network 1,
+     -- This includes the solution plot and convergence table for network 2,
+              
+   - (4/4 pts) Discuss convergence rate seen in Table of || f(v) ||_2 values,
+             should conclude its quadratic, doubling the number of accurate 
+             digits each iteration
+
+            Discuss how you accounted for the singularity of the Jacobian, $J(f(v)$, in your code.
+            -> Used pseudoinverse, so long as $v_0$ and $s$ are $\perp$ Null$(A)$, then
+               we never get any vectors in the nullspace of $A$ and we find the solution
+               obeys Kirchoff's law that the voltages must sum to one 
+ 
+
+   - (2/4 pts) Discuss the voltage level at the new node 6 correctly.
+    
+Name: Theo Nichols and Andrew Vargas
+Total: 97/100
+
+Comments:
+
+1. Import Newton convergence data from file into Latex tables
+   (i.e., no copied and pasted data directly into the main report Latex file). (-1)
+
+2. Discuss the voltage level at the new node 6 correctly. (-2)
+
+     The nodal voltages are the sum the voltage drops over the three edges in
+     a loop between 0, 6, and 1.  And this sum must be 0.  Because of the
+     forcing "s" the voltages at nodes 0 and 1 are unlikely to change a lot,
+     so the new node will have to equalize the voltage between them.  The
+     previous voltage values for 0 and 1 were 0.5325835 and -0.35436157
+     respectively, so then if the voltages don't change much, the value at 6
+     will be around (0.5325835  -0.35436157) / 2 = 0.08911.  This is indeed
+     close to what we see.  The new voltages, after node 6 is added, at nodes
+     0 and 1 are 0.33094 and -0.2363, respectively.  And the voltage at node 6
+     is then (0.33094 - 0.2363) / 2 = 0.04732
+
+
+
+ 
+++++++++++++ No Extra Work ++++++++++++++++
+10 points extra credit
+  - Find some v_0 for which Newton stagnates or diverges
+  - The new vector v_0 should be clearly described in the text
+  - The student should demonstrate stagnation or divergence for the v_0, 
+    not very hard
+     
+10 points extra credit
+  - Construct a new vector s that satisfies Kirchhoff's Law
+  - The new vector s should be clearly described in the text.  This vector
+    must satisfy  (sum_i s_i  = 0)
+  - There should be new result(s) shown for this s
+  - There should be a sentence or two describing how s changed/impacted
+    each node's voltage. 
+
