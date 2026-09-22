@@ -41,18 +41,16 @@ for fcn in fcn_list:
     k_l = 0
     k_q = 0
     errors = []
+    output = []
 
     for i in range(len(data) - 1):
         errors.append(abs(data[i+1] - data[i]))
 
-    for i in range(len(errors) -1):
+    for i in range(len(errors) - 1):
         k_l = errors[i+1] / errors[i]
         k_q = errors[i+1] / (errors[i]**2)
-            
-        print("Linear convergence ration: " + str(k_l))
-        print("Quadratic convergence ration: " + str(k_q))
 
-    # Also, use your skills from the last lab, and use savetxt() to dump 
-    # data and/or convergence rates to a text file
+        output.append(
+            f"& ${float(k_l):.8g}$ & ${float(k_q):.8g}$ \\\\")
 
-
+    np.savetxt(f"convergence_{fcnt-1}.txt", output, fmt="%s")
