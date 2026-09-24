@@ -28,7 +28,7 @@
    - Code measures convergence correctly for all three functions
 
 
-   (19/20) points for report
+   (20/20) points for report
    - (8/8 pts) Report is well-structured like in the template 
      -- Cover page, and each task having a what/how/why description 
         The section names don't need to be exactly "what", "how", "why", but the 
@@ -40,7 +40,7 @@
 
 
 
-(43/45) points for the Multi-Dimensional Newton's Problems
+(41/45) points for the Multi-Dimensional Newton's Problems
 
    (20/25) points for code (5 points each)
    - Multi-dimensional Newton's implemented, using pseudo-inverse 
@@ -65,7 +65,7 @@
      -- This includes the solution plot and convergence table for network 1,
      -- This includes the solution plot and convergence table for network 2,
               
-   - (4/4 pts) Discuss convergence rate seen in Table of || f(v) ||_2 values,
+   - (2/4 pts) Discuss convergence rate seen in Table of || f(v) ||_2 values,
              should conclude its quadratic, doubling the number of accurate 
              digits each iteration
 
@@ -75,17 +75,18 @@
                obeys Kirchoff's law that the voltages must sum to one 
  
 
-   - (2/4 pts) Discuss the voltage level at the new node 6 correctly.
+   - (1/4 pts) Discuss the voltage level at the new node 6 correctly.
     
 Name: Theo Nichols and Andrew Vargas
-Total: 97/100
+Total: 95/100
 
 Comments:
 
-1. Import Newton convergence data from file into Latex tables
-   (i.e., no copied and pasted data directly into the main report Latex file). (-1)
+1. Insert a few sentences that specifically discuss each table and figure, e.g.,
+	"in table 2, we give ||f(v^{(k)})||_2, and we can see the behavior ....."
+	Also, how do table 2 and 3 differ? (-2)
 
-2. Discuss the voltage level at the new node 6 correctly. (-2)
+2. Discuss the voltage level at the new node 6 correctly. (-3)
 
      The nodal voltages are the sum the voltage drops over the three edges in
      a loop between 0, 6, and 1.  And this sum must be 0.  Because of the
