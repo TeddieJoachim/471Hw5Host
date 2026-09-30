@@ -1,35 +1,36 @@
-import numpy as np
+import numpy as np 
 import matplotlib.pyplot as plt
-from lglnodes import lglnodes
+from lglnodes import lglnodes 
 
 # The integrand
 def f(k, x):
-return np.e**np.cos(k*x)
+  return np.e**np.cos(k*x)
 
 '''
 def trapezoid(func, k, n):
-interval = np.linspace(-1, 1, n+1) # need +1 points to get n intervals
-h = 2 / n # basically hard coded since the interval is -1 to 1
-fVals = func(k, interval) # get f at every point on interval.
+  interval = np.linspace(-1, 1, n+1) # need +1 points to get n intervals
+  h = 2 / n # basically hard coded since the interval is -1 to 1
+  fVals = func(k, interval) # get f at every point on interval.
 
-return h * ( ((fVals[0] + fVals[-1]) / 2) + np.sum(fVals[1:-1]))
+  return h * ( ((fVals[0] + fVals[-1]) / 2) + np.sum(fVals[1:-1]))
 '''
+  
 # added gauss ------------------
 def gauss(func, k, n):
-# nodes and weights from LGL file
-nodes, weights = lglnodes(n)
-# evaluates e^cos(kx) for every node
-fVals = func(k, nodes)
-# returns sum of products between fVals and their weights
-return np.sum(weights * fVals)
+  # nodes and weights from LGL file 
+  nodes, weights = lglnodes(n)
+  # evaluates e^cos(kx) for every node
+  fVals = func(k, nodes)
+  # returns sum of products between fVals and their weights
+  return np.sum(weights * fVals)
 
 # max quad. order to test
-N = 10000
+N = 10000 
 # chose 50 arbitrarily and found that the error estimate was within tolerance inside this number of intervals
-# for k=pi but not pi^2, which makes sense as the larger number as an argument to cosine is going to massively
+# for k=pi but not pi^2, which makes sense as the larger number as an argument to cosine is going to massively 
 # shrink the period
 
-# gauss quad approximations
+# gauss quad approximations 
 resultsK1 = []
 resultsK2 = []
 
@@ -39,33 +40,33 @@ errorEstK2 = []
 # error tolerance per assignment requirement
 tol = 10**-10
 
-# this was the experimental block but I also used it to collect the values of the trapezoid method,
+# this was the experimental block but I also used it to collect the values of the trapezoid method, 
 # will eventually put them into latex tables
 # using this for gauss instead of trap. --------------
 for k in [np.pi, np.pi**2]:
-previous = None
-# changed range to maintain N inclusive --------------
-for n in range(2, N +1):
-# calculting next approx. using G-L nodes & weights -------------
-current = gauss(f, k, n)
-if (k == np.pi):
-resultsK1.append(current)
-else:
-resultsK2.append(current)
+  previous = None
+  # changed range to maintain N inclusive --------------
+  for n in range(2, N +1):
+    # calculting next approx. using G-L nodes & weights -------------
+    current = gauss(f, k, n)
+    if (k == np.pi): 
+      resultsK1.append(current)
+    else:
+      resultsK2.append(current)
 
-if previous is not None:
-error_est = np.abs(current - previous)
-if (k == np.pi):
-errorEstK1.append((n, error_est))
-else:
-errorEstK2.append((n, error_est))
-if error_est < tol:
-print("k =", k, "tolerance reached at n =", n)
-print("Approximation =", current)
-print("Estimated error =", error_est)
-break
+    if previous is not None:
+      error_est = np.abs(current - previous)
+      if (k == np.pi): 
+        errorEstK1.append((n, error_est))
+      else:
+        errorEstK2.append((n, error_est))
+      if error_est < tol:
+        print("k =", k, "tolerance reached at n =", n)
+        print("Approximation =", current)
+        print("Estimated error =", error_est)
+        break
 
-previous = current
+    previous = current
 
 # unpack the n and err values into lists
 n1, e1 = zip(*errorEstK1)
@@ -93,10 +94,10 @@ e0 = e1[0]
 # linear = e0 * (n_ref / n0)**(-1)
 # quadratic = e0 * (n_ref / n0)**(-2)
 # cubic = e0 * (n_ref / n0)**(-3)
-# chose C = e and alpha = 0.01 (just a small number) for exponential decay
+# chose C = e and alpha = 0.01 (just a small number) for exponential decay 
 # i don't anticipate trapezoid will converge exponentially, so can save twiddling c and a for 2.
 # subtract n0 from n so that when n = n0:
-# C^(-alpha*(n-n0)) = C^0 = 1
+#     C^(-alpha*(n-n0)) = C^0 = 1
 # and therefore the curve starts at exactly e0.
 '''
 # init vals for exp. ref. curve
