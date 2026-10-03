@@ -1,4 +1,5 @@
 from numpy import *
+import numpy as np
 from matplotlib import pyplot as plt
 from lglnodes import *
 from plot_transformed_grid import plot_transformed_grid
@@ -116,10 +117,16 @@ def J2(r, s):
 
 
 # QUESTION 4A
+data = []
+
 for n in [2, 10, 50]:
-    print("n =", n)
-    print("Omega_R:", trapezoid_2D(u1, n, J0, transformation0))
-    print("Omega_1:", trapezoid_2D(u1, n, J1, transformation1))
+    omega_R = trapezoid_2D(u1, n, J0, transformation0)
+    omega_1 = trapezoid_2D(u1, n, J1, transformation1)
+    data.append([n, omega_R, omega_1])
+
+data = np.array(data)
+
+np.savetxt("q4a_table.txt", data, fmt=["%d", "%.10e", "%.10e"], delimiter=" & ", newline=" \\\\\n")
 
 
 # Compute error in numerical derivative for u_3 using first order forward finite differencing
