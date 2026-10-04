@@ -80,11 +80,18 @@ e2 = np.array(e2)
 
 
 # use the full range of n values from both Gauss calcs. -----------
-n_ref = np.arange(min(n1[0], n2[0]), max(n1[-1], n2[-1]) + 1)
+# n_ref = np.arange(min(n1[0], n2[0]), max(n1[-1], n2[-1]) + 1)
+
+# giving each reference curve its own range:
+# reference range for k=pi
+n_ref_pi = np.arange(n1[0], n1[-1] + 1)
+
+# reference range for k=pi^2
+n_ref_pi_2 = np.arange(n2[0], n2[-1] + 1)
 
 # Use the first error from k = pi as the reference curve
-n0 = n1[0]
-e0 = e1[0]
+# n0 = n1[0]
+# e0 = e1[0]
 # n0 = n_ref[0] ---------------------------
 # e0 = e1[0]
 
@@ -102,11 +109,39 @@ e0 = e1[0]
 '''
 # init vals for exp. ref. curve
 C = np.e
-alpha = 0.01
+# experimenting with different alpha vals
+# alpha1 = 0.1
+# alpha2 = 0.3
+# for k = pi^2
+alpha3 = 0.5
+# alpha4 = 0.7
+# alpha5 = 0.9
+# alpha6 = 1.1
+# for k = pi
+alpha7 = 1.5
 
-# reused from trap. model
-exponential = e0 * C**(-alpha * (n_ref - n0))
+# k=pi
+n01 = n1[0]
+e01 = e1[0]
 
+# k=pi^2
+n02 = n2[0]
+e02 = e2[0]
+'''
+# reused from trap. model 
+exp1 = e0 * C**(-alpha1 * (n_ref - n0))
+# using experimental alpha vals
+exp2 = e0 * C**(-alpha2 * (n_ref - n0))
+exp3 = e0 * C**(-alpha3 * (n_ref - n0))
+exp4 = e0 * C**(-alpha4 * (n_ref - n0))
+exp5 = e0 * C**(-alpha5 * (n_ref - n0))
+exp6 = e0 * C**(-alpha6 * (n_ref - n0))
+exp7 = e0 * C**(-alpha7 * (n_ref - n0))
+'''
+
+# for alpha 3 and alpha 7 (k=pi and k=pi^2)
+exp8 = e01 * C**(-alpha7 * (n_ref_pi - n01))
+exp9 = e02 * C**(-alpha3 * (n_ref_pi_2 - n02)) 
 
 plt.loglog(n1, e1, label=r'$k=\pi$')
 plt.loglog(n2, e2, label=r'$k=\pi^2$')
@@ -116,7 +151,16 @@ plt.loglog(n_ref, linear, '--', label='Linear')
 plt.loglog(n_ref, quadratic, '--', label='Quadratic')
 plt.loglog(n_ref, cubic, '--', label='Cubic')
 '''
-plt.loglog(n_ref, exponential, '--', label='Exponential')
+# plt.loglog(n_ref, exp1, '--', label=r'Exponential, $\alpha=0.1$')
+# # adding other experimental plots
+# plt.loglog(n_ref, exp2, '--', label=r'Exponential, $\alpha=0.3$')
+# plt.loglog(n_ref, exp3, '--', label=r'Exponential, $\alpha=0.5$')
+# plt.loglog(n_ref, exp4, '--', label=r'Exponential, $\alpha=0.7$')
+# plt.loglog(n_ref, exp5, '--', label=r'Exponential, $\alpha=0.9$')
+# plt.loglog(n_ref, exp6, '--', label=r'Exponential, $\alpha=1.1$')
+# plt.loglog(n_ref, exp7, '--', label=r'Exponential, $\alpha=1.5$')
+plt.loglog(n_ref_pi, exp8, '--', label=r'Exp. ref., $k=\pi,\ \alpha=1.5$')
+plt.loglog(n_ref_pi_2, exp9, '--', label=r'Exp. ref., $k=\pi^2, \alpha=0.5$')
 
 # changed labels ----------------------
 plt.xlabel('Quad order, n')
