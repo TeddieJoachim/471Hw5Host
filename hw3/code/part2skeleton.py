@@ -112,6 +112,13 @@ def u3_x_exact(x,y):
 def u3_y_exact(x,y):
     return exp(x + y)
 
+# 1st-order forward difference approx in x&y
+def forward_x(func, x, y, h):
+    return (func(x + h, y) - func(x, y)) / h
+
+def forward_y(func, x, y, h):
+    return(func(x, y+h) - func(x,y))/h 
+
 def transformation2(r,s):
     '''
     Map (r,s) -->  (x,y)
