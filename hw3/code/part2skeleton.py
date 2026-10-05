@@ -98,6 +98,20 @@ def u2(x,y):
 def u3(x,y):
     return exp(x + y) 
 
+# for task 5, 
+# exact partial derivatives of u2&u3
+def u2_x_exact(x,y):
+    return cos(x)*cos(y)
+
+def u2_y_exact(x,y):
+    return -sin(x)*sin(y)
+
+def u3_x_exact(x,y):
+    return exp(x + y)
+
+def u3_y_exact(x,y):
+    return exp(x + y)
+
 def transformation2(r,s):
     '''
     Map (r,s) -->  (x,y)
