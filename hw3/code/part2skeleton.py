@@ -98,7 +98,7 @@ def u2(x,y):
 def u3(x,y):
     return exp(x + y) 
 
-# for task 5, 
+# for part2 #5, 
 # exact partial derivatives of u2&u3
 def u2_x_exact(x,y):
     return cos(x)*cos(y)
@@ -112,12 +112,23 @@ def u3_x_exact(x,y):
 def u3_y_exact(x,y):
     return exp(x + y)
 
-# 1st-order forward difference approx in x&y
+# 1st-order forward difference approx in x&y (eqns (9) & (10))
 def forward_x(func, x, y, h):
     return (func(x + h, y) - func(x, y)) / h
 
 def forward_y(func, x, y, h):
     return(func(x, y+h) - func(x,y))/h 
+
+# squared derivative error (eqn (11))
+def derivative_err(func, ux_exact, uy_exact, x,y,h):
+    # compute numerical derivatives
+    ux_approx = forward_x(func,x,y,h)
+    uy_approx = forward_y(func,x,y,h)
+    # compute how farr each numerical derivative is from the exact derivative
+    x_err = ux_approx - ux_exact(x,y)
+    y_err = uy_approx - uy_exact(x,y)
+    
+    return (x_err + y_err)**2
 
 def transformation2(r,s):
     '''
