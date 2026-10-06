@@ -184,3 +184,26 @@ np.savetxt("q4a_table.txt", data, fmt=["%d", "%.10e", "%.10e"], delimiter=" & ",
 # test eqn (12) 
 # test_err = compute_err(u3, u3_x_exact, u3_y_exact, 8)
 # print("u3 error for n=8:", test_err)
+
+# grid sizes from assignment
+n_vals = [8, 16, 32, 64, 128, 256]
+
+h_vals = []
+u2_errs = []
+u3_errs = []
+
+for n in n_vals:
+    h = 2/(n-1)
+    # compute err(h) for u2 and u3
+    err_u2 = compute_err(u2, u2_x_exact, u2_y_exact, n)
+    err_u3 = compute_err(u3, u3_x_exact, u3_y_exact, n)
+
+    h_vals.append(h)
+    u2_errs.append(err_u2)
+    u3_errs.append(err_u3)
+
+    print("n =", n)
+    print("h =", h)
+    print("u2 error =", err_u2)
+    print("u3 error =", err_u3)
+    print() 
