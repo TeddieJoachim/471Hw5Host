@@ -127,8 +127,20 @@ def derivative_err(func, ux_exact, uy_exact, x,y,h):
     # compute how farr each numerical derivative is from the exact derivative
     x_err = ux_approx - ux_exact(x,y)
     y_err = uy_approx - uy_exact(x,y)
-    
+
     return (x_err + y_err)**2
+
+# compute err(h) (eqn(12))
+def compute_err(func, ux_exact, uy_exact, n):
+    # grid spacing from assignment
+    h = 2/(n-1)
+    #err fxn that will be integrated over Omega_2
+    def err_func(x,y):
+        return derivative_err(func, ux_exact, uy_exact, x,y,h)
+    # integrate the squaed derivative err over Omega_2
+    err_integral = trapezoid_2D(err_func, n, J2, transformation2)
+    # eqn(12) says to take the square root of the integral to get err(h)
+    return np.sqrt(err_integral) 
 
 def transformation2(r,s):
     '''
@@ -169,4 +181,6 @@ np.savetxt("q4a_table.txt", data, fmt=["%d", "%.10e", "%.10e"], delimiter=" & ",
 #plot_transformed_grid(transformation1, 10, fname='hw3_transformed_grid1')
 ##########
 
-
+# test eqn (12) 
+# test_err = compute_err(u3, u3_x_exact, u3_y_exact, 8)
+# print("u3 error for n=8:", test_err)
