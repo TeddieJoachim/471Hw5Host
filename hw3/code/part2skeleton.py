@@ -219,8 +219,12 @@ e0 = u2_errs[0]
 ord1_ref = e0 * (h_vals / h0) 
 ord2_ref = e0 * (h_vals / h0)**2 
 
+task5_data = np.column_stack((n_vals, h_vals, u2_errs, u3_errs))
+np.savetxt("q5_table.txt", task5_data, fmt=["%d", "%.10e", "%.10e", "%.10e"], delimiter=" & ", newline=" \\\\\n")
+
 plt.figure()
 
+# saving #5 converg. results for latex report 
 plt.loglog(h_vals, u2_errs, 'o-', label=r'$u_2$ error')
 plt.loglog(h_vals, u3_errs, 'o-', label=r'$u_3$ error')
 
