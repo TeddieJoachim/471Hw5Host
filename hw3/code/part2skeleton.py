@@ -172,7 +172,17 @@ data = np.array(data)
 
 np.savetxt("q4a_table.txt", data, fmt=["%d", "%.10e", "%.10e"], delimiter=" & ", newline=" \\\\\n")
 
+# QUESTION 4B
+data2 = []
 
+for n in [2, 10, 50]:
+    omega_R_2 = trapezoid_2D(u2, n, J0, transformation0)
+    omega_1_2 = trapezoid_2D(u2, n, J1, transformation1)
+    data2.append([n, omega_R_2, omega_1_2])
+
+data2 = np.array(data2)
+
+np.savetxt("q4b_table.txt", data2, fmt=["%d", "%.10e", "%.10e"], delimiter=" & ", newline=" \\\\\n")
 # Compute error in numerical derivative for u_3 using first order forward finite differencing
 
 ##########
