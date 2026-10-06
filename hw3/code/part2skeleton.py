@@ -202,11 +202,11 @@ for n in n_vals:
     u2_errs.append(err_u2)
     u3_errs.append(err_u3)
 
-    # print("n =", n)
-    # print("h =", h)
-    # print("u2 error =", err_u2)
-    # print("u3 error =", err_u3)
-    # print() 
+    print("n =", n)
+    print("h =", h)
+    print("u2 error =", err_u2)
+    print("u3 error =", err_u3)
+    print() 
 
 # converting results to numpy arrays 
 h_vals = np.array(h_vals)
@@ -218,3 +218,20 @@ e0 = u2_errs[0]
 
 ord1_ref = e0 * (h_vals / h0) 
 ord2_ref = e0 * (h_vals / h0)**2 
+
+plt.figure()
+
+plt.loglog(h_vals, u2_errs, 'o-', label=r'$u_2$ error')
+plt.loglog(h_vals, u3_errs, 'o-', label=r'$u_3$ error')
+
+plt.loglog(h_vals, ord1_ref, '--', label=r'$O(h)$')
+plt.loglog(h_vals, ord2_ref, '--', label=r'$O(h^2)$')
+
+plt.xlabel(r'Grid spacing, $h$')
+plt.ylabel(r'Error, $\mathrm{err}(h)$')
+plt.title('Finite Difference Convergence on $\Omega_2$')
+
+plt.legend()
+plt.grid(True, which='both')
+plt.savefig('error_on_omega2.png', dpi=300, bbox_inches='tight')
+plt.show() 
