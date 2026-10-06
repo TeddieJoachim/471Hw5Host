@@ -202,8 +202,19 @@ for n in n_vals:
     u2_errs.append(err_u2)
     u3_errs.append(err_u3)
 
-    print("n =", n)
-    print("h =", h)
-    print("u2 error =", err_u2)
-    print("u3 error =", err_u3)
-    print() 
+    # print("n =", n)
+    # print("h =", h)
+    # print("u2 error =", err_u2)
+    # print("u3 error =", err_u3)
+    # print() 
+
+# converting results to numpy arrays 
+h_vals = np.array(h_vals)
+u2_errs = np.array(u2_errs)
+u3_errs = np.array(u3_errs)
+# ref curves for O(h) & O(h^2), and anchor curves at 1st u2 err val
+h0 = h_vals[0]
+e0 = u2_errs[0]
+
+ord1_ref = e0 * (h_vals / h0) 
+ord2_ref = e0 * (h_vals / h0)**2 
