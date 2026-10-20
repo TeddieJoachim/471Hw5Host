@@ -25,7 +25,7 @@
 
 ## Send mail when the script ends
 #SBATCH --mail-type=BEGIN,FAIL,END
-#SBATCH --mail-user=jbschroder@unm.edu 
+#SBATCH --mail-user=thnichols@unm.edu 
 
 
 ########################################################################

@@ -64,9 +64,9 @@ def compute_finite_difference(n, nt, k, f, fpp_num):
     # portion.  For example, using the y = [0, 0.33, 0.66, 1.0] example above,
     # and considering thread 0, will yield start = 0 and end = 2, so that 
     # y[start:end] --> [0, 0.33]
-    start = <first domain row owned by thread k, cast as integer>
+    start = int(k * (n/nt))
             # MAKE sure to cast start as an integer, start = int(...)
-    end = <first domain row owned by thread k+1, cast as integer>
+    end = int((k+1) * (n/nt))
             # MAKE sure to cast end as an integer, end = int(...)
     
     # Task:
@@ -84,9 +84,14 @@ def compute_finite_difference(n, nt, k, f, fpp_num):
     #     so that y[start_halo : end_halo] --> [0.33, 0.66, 1.0]
     #   - Note that for larger numbers of threads, some threads 
     #     will have halo regions including domain rows above and below.
-    start_halo = <start - 1, unless k = the first thread>
-    end_halo = <end + 1, unless k = the last thread>
-
+    if (k == 0):
+        start_halo = start
+    else:
+        start_halo = start + 1
+    if (k == nt):
+        end_halo = end
+    else:
+        end_halo = end + 1
     
     # Construct local CSR matrix.  Here, you're given that function in poisson.py
     # This matrix will contain the extra halo domain rows
@@ -144,6 +149,9 @@ def fcn_prime_prime(x,y):
     # This function should return the second derivative of "fcn" 
     # The second derivative should contain terms like:
     # -cos((x+1)**(1./3.) + (y+1)**(1./3.))*(1./9.)*(x+1)**(-4./3)
+    f_xx = 0
+    f_yy = -cos((x+1)**(1./3.) + (y+1)**(1./3.))*(1./9.)*(x+1)**(-4./3)
+    return f_xx + f_yy
 
 
 ##
