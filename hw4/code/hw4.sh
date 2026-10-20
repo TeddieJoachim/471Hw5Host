@@ -41,7 +41,7 @@
 #      < press y to accept installation of all new packages and the many dependencies > 
 
 module load miniconda3
-source activate hopper_openmpi_py3_2026
+source activate lab4Env
 ########################################################################
 ########################################################################
 
@@ -59,5 +59,5 @@ cd $SLURM_SUBMIT_DIR/
 # Now, run your program.  Just change the below filename to run a 
 # different program. 
 ########################################################################
-python3 hw4_solution.py
+python3 hw4_skeleton.py
 

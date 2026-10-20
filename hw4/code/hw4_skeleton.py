@@ -95,6 +95,7 @@ def compute_finite_difference(n, nt, k, f, fpp_num):
     h = 1./(n-1)
     A *= 1/h**2
 
+
     # Inspect a row or two of A, and verify that it's the correct 5 point stencil
     # You can print a few rows of A, with print(A[k,:])
     print(A[k,:])
@@ -115,11 +116,23 @@ def compute_finite_difference(n, nt, k, f, fpp_num):
     X = X.reshape(-1,)
     Y = Y.reshape(-1,) 
 
+    print(f"Thread {k}: start={start}, end={end}")
+    print(f"Thread {k}: start_halo={start_halo}, end_halo={end_halo}")
+    print(f"Thread {k}: A.shape={A.shape}")
+
     # Compute local portion of f by using X and Y
     f_vals = f(X,Y)
-    
+
+    print(f"Thread {k}: f_vals.shape={f_vals.shape}")
+
     # Compute the output, that is, the matrix A applied to f_vals 
     output = A @ f_vals
+    
+    print("First output values:", output[:10])
+    print("First input values:", f_vals[:10])
+    print(f"Thread {k}: output.shape={output.shape}")
+
+    output = output.reshape((end_halo - start_halo, n))
     ownedFirst = start - start_halo
     ownedLast = ownedFirst + (end - start)
     
@@ -128,6 +141,8 @@ def compute_finite_difference(n, nt, k, f, fpp_num):
     # Set the output array (flatten first)
     fpp_num[start*n:end*n] = output.reshape(-1) 
 
+
+    print("First numerical values:", fpp_num[:10])
 
 def fcn(x,y):
     return cos((x+1)**(1./3.) + (y+1)**(1./3.)) + sin((x+1)**(1./3.) + (y+1)**(1./3.))
