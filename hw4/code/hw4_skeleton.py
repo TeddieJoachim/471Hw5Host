@@ -98,7 +98,7 @@ def compute_finite_difference(n, nt, k, f, fpp_num):
 
     # Inspect a row or two of A, and verify that it's the correct 5 point stencil
     # You can print a few rows of A, with print(A[k,:])
-    print(A[k,:])
+    #print(A[k,:])
 
     # Construct a grid of evenly spaced points over this thread's halo region
     #
@@ -116,21 +116,21 @@ def compute_finite_difference(n, nt, k, f, fpp_num):
     X = X.reshape(-1,)
     Y = Y.reshape(-1,) 
 
-    print(f"Thread {k}: start={start}, end={end}")
-    print(f"Thread {k}: start_halo={start_halo}, end_halo={end_halo}")
-    print(f"Thread {k}: A.shape={A.shape}")
+    #print(f"Thread {k}: start={start}, end={end}")
+    #print(f"Thread {k}: start_halo={start_halo}, end_halo={end_halo}")
+    #print(f"Thread {k}: A.shape={A.shape}")
 
     # Compute local portion of f by using X and Y
     f_vals = f(X,Y)
 
-    print(f"Thread {k}: f_vals.shape={f_vals.shape}")
+    #print(f"Thread {k}: f_vals.shape={f_vals.shape}")
 
     # Compute the output, that is, the matrix A applied to f_vals 
     output = A @ f_vals
     
-    print("First output values:", output[:10])
-    print("First input values:", f_vals[:10])
-    print(f"Thread {k}: output.shape={output.shape}")
+    #print("First output values:", output[:10])
+    #print("First input values:", f_vals[:10])
+    #print(f"Thread {k}: output.shape={output.shape}")
 
     output = output.reshape((end_halo - start_halo, n))
     ownedFirst = start - start_halo
@@ -142,7 +142,7 @@ def compute_finite_difference(n, nt, k, f, fpp_num):
     fpp_num[start*n:end*n] = output.reshape(-1) 
 
 
-    print("First numerical values:", fpp_num[:10])
+    #print("First numerical values:", fpp_num[:10])
 
 def fcn(x,y):
     return cos((x+1)**(1./3.) + (y+1)**(1./3.)) + sin((x+1)**(1./3.) + (y+1)**(1./3.))
@@ -162,7 +162,7 @@ def fcn_prime_prime(x,y):
 ##
 # Here are three problem size options for running.  The instructor has chosen these
 # for you.  
-option = 3
+option = 2
 if option == 1:
     # Choose this if doing a final run on CARC for your strong scaling study
     
@@ -179,10 +179,11 @@ elif option == 2:
     
     # Problem sizes is an array of grid sizes "n" to loop over
     problem_sizes = 210*arange(1,6) 
+    # this is 5 grid sizes, using 5 trials -> 1 thread per trial, 25 total calls to Thread.
     
     # For each grid size, experiment with all of the different thread numbers in num_threads 
     # First, get this to work for 1 thread, then try for 2 and 3 threads
-    num_threads = [1] 
+    num_threads = [1,2,3] 
 
 elif option == 3:
     # Choose this for code development and debugging on your laptop/lab machine
@@ -272,7 +273,7 @@ for i,nt in enumerate(num_threads):
         # IGNORES BOUNDARY 
         e = fpp_num_2d[1:-1, 1:-1] - fpp_2d[1:-1, 1:-1]
         errorVals[i,j] = L2norm(e,h)
-        print(f"threads={nt}, n={n}, " f"L2 error={errorVals[i,j]}, " f"minimum time={timingRes[i,j]:.6e} s")
+        #print(f"Threads={nt}, n={n}, " f"L2 error={errorVals[i,j]}, " f"minimum time={timingRes[i,j]:.6e} s")
 
 
     ##
@@ -284,17 +285,38 @@ for i,nt in enumerate(num_threads):
     #
     # Recommended to comment out plotting before running on CARC 
     #
-    # For instance, you could plot with something like this,
-    #pyplot.loglog(problem_sizes, <array slice of error values>) 
-    #pyplot.loglog(problem_sizes, <reference quadratic convergence data>)
-    #<insert nice formatting options with large axis labels, tick fontsizes, and large legend labels>
-    #pyplot.savefig('error'+str(i)+'.png', dpi=500, format='png', bbox_inches='tight', pad_inches=0.0,)
+
+    pyplot.figure()
+    pyplot.loglog(problem_sizes, errorVals[i, :], 'o-', label=f'{nt} threads')
+    hVals = 1./(problem_sizes - 1)
+    firstH = 1./(problem_sizes[0] - 1)
+    # theoretically, our code satisfies E(h)=c*(h^2) -> c = e0/h0^2 => ref = e0 / h0^2 * h^2
+    reference = 2.0 * (errorVals[i, 0] / (firstH**2)) * hVals**2
+    # mult by 2 so that both can be seen
+
+    #print("problem sizes:", problem_sizes)
+    #print("errors:", errorVals[i, :])
+    #print("reference:", reference)
+
+    pyplot.loglog(problem_sizes, reference, '--', label='Quadratic reference')
+
+    pyplot.xlabel('Grid size n', fontsize=14)
+    pyplot.ylabel(r'$L^2$ error', fontsize=14)
+    pyplot.title(f'Convergence with {nt} threads', fontsize=16)
+    pyplot.xticks(fontsize=12)
+    pyplot.yticks(fontsize=12)
+    pyplot.legend(fontsize=12)
+    pyplot.grid(True, which='both')
+
+    pyplot.savefig('error' + str(nt) + '.png', dpi=500, format='png', bbox_inches='tight', pad_inches=0.0)
+
+    pyplot.close()
 
 
 # Task:
 # Save timing results to text file
 # For instance, if your timings results are in an array named "timings", 
 # you can output these results to file, with
-# savetxt('timings.txt', timings)
+savetxt('timings.txt', timingRes)
 
 
