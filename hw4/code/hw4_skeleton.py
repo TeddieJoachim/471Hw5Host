@@ -317,6 +317,6 @@ for i,nt in enumerate(num_threads):
 # Save timing results to text file
 # For instance, if your timings results are in an array named "timings", 
 # you can output these results to file, with
-savetxt('timings.txt', timingRes)
+savetxt('timingsTo8Threads.txt', timingRes)
 
 
