@@ -1,0 +1,131 @@
+100 points total
+
+(10/10) points for structure of repository
+ - There must be directories, 
+    hw3 
+    hw3/report
+    hw3/code
+
+ - The report must be in
+    hw3/report/_some_report.pdf
+
+ - There must be readme file
+   hw3/README.txt or hw3/README.md
+
+
+45/45 points for Part 1:
+
+  ** 25/25 points for code *
+
+  - (7/7 pts) Implement trapezoid rule for k = pi and k = pi^2
+
+  - (5/5 pts) Is N large enough for the error estimate for the trapezoid rule to fall
+  below 10^{-10}? 
+
+  - (8/8 pts) Implement Gauss rule for k = pi and k = pi^2
+
+  - (5/5 pts) Is N large enough for the error estimate for the trapezoid rule to fall
+  below 10^{-10}? 
+
+
+  ** 20/20 points for report *
+  - (5/5 pts) Report is well-structured like in the template      
+
+  - (3/3 pts) Is the error for the trapezoid rule plotted correctly on a log-log
+    plot?  
+  
+    Are there reference curves for linear, quadratic, cubic, and
+    exponential convergence?  
+
+    Is everything labeled correctly and legibly in the plot?
+
+
+  - (3/3 pts) Are the observed convergence rates for trapezoid discussed
+    correctly?
+
+    For k=pi^2, trap converges cubically, which is correct, because we are
+    measuring _local_ error.  
+
+    For k=pi, we get exponential convergence because of the symmetric
+    distribution of error discussed in class.  This is faster than the
+    theoretical bounds.
+
+
+  - (3/3 pts) Is the error Gaussian quadrature plotted correctly on a log-log
+    plot? 
+
+    [ Evaluate same as above.  Note, trap and Gauss can be on the same plot. ]
+
+
+  - (3/3 pts) Are the observed convergence rates for Gaussian quadrature 
+    discussed correctly?
+
+    For k=pi^2 and k=pi, the error converges exponentially, agreeing with the
+    theoretical bounds. 
+
+
+  - (3/3 pts) Discuss cost: count function evaluations to conclude that trapezoid
+    is fastest for k=pi and Gaussian is fastest for k=pi^2.
+
+    Conclude that in a general setting, Gaussian is likeliest to be fastest, as
+    predicted by the theory
+
+
+
+45/45 points for Part 2:
+
+  ** 25/25 points for code *
+  - (10/10 pts) Implement 2D trapezoid rule
+ 
+  - (10/10 pts) Implement finite differencing to compute L2-norm of the error for the first derivatives
+
+  - (5/5 pts) Code to run tests on u_1, u_2, u_3, and for the finite
+    differencing
+
+
+  ** 20/20 points for report *
+  - (4/4 pts) Report is well-structured like in the template 
+
+  - (4/4 pts) Correct determinant of the Jacobian for the third transformation function
+      Here's my example:
+
+    def Jacobian31(r,s):
+        '''
+        determinant of Jacobian of transformation
+        | dx/dr   dx/ds |  =  dx/dr dy/ds  -  dx/ds dy/dr
+        | dy/dr   dy/ds |
+        '''
+        def dxdr(r,s): return cos(0.5*pi*s)
+        def dyds(r,s): return (2 + r + 0.2*sin(5*pi*s))*( cos(0.5*pi*s)*(0.5*pi))  +  sin(0.5*pi*s)*(0.2*cos(5*pi*s)*(5*pi))
+        def dxds(r,s): return (2 + r + 0.2*sin(5*pi*s))*(-sin(0.5*pi*s)*(0.5*pi))  +  cos(0.5*pi*s)*(0.2*cos(5*pi*s)*(5*pi))
+        def dydr(r,s): return sin(0.5*pi*s)
+    
+        return dxdr(r,s)*dyds(r,s) - dxds(r,s)*dydr(r,s)
+
+
+  - (4/4 pts) Show results and discuss computing u_1 on \Omega_R and \Omega_1 for three different n-values
+            
+            Discuss how this result should always be 4 numerically, as Trapezoid is exactly for 
+            constant-valued functions
+            
+            Discuss how the numerical value of the integral should be the same
+            between \Omega_R and \Omega_1 because the determinant of the
+            Jacobian is 1 -- that is, the actual area being integrated doesn't
+            change.  So, for a constant function, we end up with the same
+            value.
+  
+
+  - (4/4 pts) Show results and discuss computing u_2 on \Omega_R and \Omega_1
+      for three different n-values
+            
+
+
+  - (4/4 pts) Present log-log plot of error for numerical derivatives on a
+       log-log scale, that resembles reference plot.  
+      
+
+
+Comments: Name: Theo Nichols and Andrew Vargas
+Total: 100/100 Late penalty -15
+	 - If you have any question regarding late penalty please talk to your instructor.
+
