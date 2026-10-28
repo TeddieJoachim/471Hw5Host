@@ -13,6 +13,7 @@
 ## This is the max run-time allowed  hr:min:sec
 #SBATCH --time=00:25:00 
 
+
 ## This is the filename for all printed output from your code
 #SBATCH --output hw4_output
 
@@ -21,7 +22,7 @@
 
 ## The debug partition will likely be faster, but if your code takes more than
 ## 8 processors, you need to switch to the general partition 
-#SBATCH --partition debug
+#SBATCH --partition general
 
 ## Send mail when the script ends
 #SBATCH --mail-type=BEGIN,FAIL,END
@@ -41,7 +42,7 @@
 #      < press y to accept installation of all new packages and the many dependencies > 
 
 module load miniconda3
-source activate hopper_openmpi_py3_2026
+source activate lab4Env
 ########################################################################
 ########################################################################
 
@@ -59,5 +60,5 @@ cd $SLURM_SUBMIT_DIR/
 # Now, run your program.  Just change the below filename to run a 
 # different program. 
 ########################################################################
-python3 hw4_solution.py
+python3 hw4_skeleton.py
 

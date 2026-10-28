@@ -1,0 +1,206 @@
+\documentclass[12pt]{article}
+
+\usepackage{amssymb,amsmath,amsthm} % Include AMS Math symbols
+\usepackage{graphicx}               % Allows for importation of figures 
+\usepackage{float}
+
+\usepackage{booktabs} % professional table typesetting commands 
+
+\usepackage{color}   % Sets up a nice typesetting environment for Python
+\usepackage{listings}
+\definecolor{dkgreen}{rgb}{0,0.6,0}
+\definecolor{gray}{rgb}{0.5,0.5,0.5}
+\definecolor{mauve}{rgb}{0.58,0,0.82}
+\lstset{frame=tb,
+  language=Python,
+  aboveskip=3mm,
+  belowskip=3mm,
+  showstringspaces=false,
+  columns=flexible,
+  basicstyle={\small\ttfamily},
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  keywordstyle=\color{blue},
+  commentstyle=\color{dkgreen},
+  stringstyle=\color{mauve},
+  breaklines=true,
+  breakatwhitespace=true,
+  tabsize=3
+}
+
+% define command \expandableinput  for table input
+\makeatletter
+\def\expinput#1{\@@input#1 }
+\makeatother
+
+\title{ HW \#4 \\ CS 471, Fall 2026}
+\author{Theo Nichols \\Andrew Vargas}
+\date{October 30, 2026}   % Activate to display a given date or no date
+
+
+\begin{document}
+
+% Display title
+\maketitle
+\clearpage
+
+\section{Task 1}
+
+\subsection{Finite-Difference Laplacian Accuracy}
+The objective of Task 1 is to evaluate the accuracy of a second-order finite-difference method to approximate the Laplacian of a given function on the unit square $([0,1]\times[0,1])$. The domain is divided into a uniform grid, with Dirichlet boundary conditions defined by the exact function. \\\\
+The numerical approximation is compared with the exact derivative using the error norm $L_2$. By increasing the grid resolution, we investigate whether the error decreases at the expected quadratic rate. We also examine the structure of the finite-difference matrix at the corner, boundary, and interior grid points. 
+
+\subsection{Method}
+The numerical approximation was computed using the second-order five-point finite-difference stencil: \[ \frac{1}{h^2} \begin{bmatrix}
+    0 & 1 & 0 \\ 1 & -4 & 1 \\ 0 & 1 & 0
+\end{bmatrix} 
+\]
+The domain was divided into an $n \times n$ uniform grid, where the grid spacing was $h = \frac{1}{(n-1)}$. The provided \texttt{poisson()} function generated a sparse matrix in Compressed Sparse Row (CSR) format, which was scaled by $\frac{1}{h^2}$. The numerical approximation of the Laplacian was then obtained through matrix-vector multiplication. \\\\
+The numerical approximation was compared with the exact Laplacian using the $L_2$ error norm, evaluated over the interior grid points: \begin{equation}
+    ||e||_{L_2} \approx \sqrt{h^2 \sum_{i,j} e^2_{ij}}
+\end{equation}
+where $e_{ij}$ represents the difference between the numerical and exact Laplacian at an interior grid point. \\\\
+To evaluate convergence, the computation was performed using grid sizes $n = 210, 420, 630, 840,$ and $1050$. The resulting errors were plotted on a log-log scale alongside a reference curve representing quadratic convergence. 
+
+\begin{figure}[htb]
+\begin{center}
+\includegraphics[width=0.75\textwidth]{part2Resources/error1.png}
+   \caption{Log-log plot of the $L_2$ error versus grid size $n$ for the one-thread computation compared with a quadratic convergence reference.}
+    \label{error1Plot}
+\end{center}
+\end{figure}
+
+To examine the CSR matrix structure, a smaller $6 \times 6$ grid was used, giving $h = 0.2.$ Three matrix rows were selected to represent a corner, a boundary wall, and an interior grid point. \begin{table}[h]
+    \centering
+    \begin{tabular}{c|c|c}
+        \textbf{Grid point} & \textbf{Matrix row} & \textbf{Non-zero coefficients} \\
+        \midrule
+        Corner & 0 & (0,-100), (1, 25), (6, 25) \\ 
+        Boundary wall & 2 & (1, 25), (2, -100), (3, 25), (8, 25) \\
+        Interior & 14 & (8, 25), (13, 25), (14, -100), (15, 25), (20, 25)
+    \end{tabular}
+    \caption{Non-zero entries of selected CSR matrix rows for a $6 \times 6$ grid.}
+    \label{tab: CSRmatrixTable}
+\end{table}
+
+The matrix-vector multiplication was also checked using the provided \texttt{check\_matvec()} 
+function, which returned a relative difference of 0.0. 
+
+\subsection{Discussion} 
+The log-log convergence plot shows that the $L_2$ error decreases as the grid size $n$ increases. The numerical error follows approximately the same slope of the quadratic reference curve, indicating second-order convergence. This agrees with the expected accuracy of the five-point finite-difference stencil, where the error decreases proportionally to $h^2$. \\\\
+The CSR matrix rows also demonstrate how the finite-difference stencil changes depending on the location of a grid point. Corner points have two neighboring grid points, boundary wall points have three, and interior points have four. As a result, their matrix rows contain three, four, and five nonzero entries, respectively. The central coefficient remains $\frac{-4}{h^2}$, while connections to points outside the domain are excluded. \\\\
+Finally, the \texttt{check\_matvec()} function returned a relative difference of $0.0$, confirming that the computed matrix-vector multiplication agrees with the reference implementation for the tested grid. Together, the verification result and convergence plot support the correctness and expected accuracy of the numerical method. 
+
+\newpage
+
+\section{Task 2: }
+\subsection{Parallelizing Our Finite Differencing Algorithm}
+
+With a single-threaded implementation in place, we sought to determine whether parallelization could improve the efficiency of our finite differencing algorithm. We used Python's \texttt{threading} module to divide the computational domain among multiple threads, allowing different portions of the problem to be processed concurrently. In this experiment, we used up to three threads, for five different grid sizes, each larger than its predecessor. Each thread is assigned a subdomain based on the total number of threads, its thread index, and the dimensions of the global grid. Because finite difference calculations near subdomain boundaries may require neighboring grid values, each thread must also account for the necessary halo regions. Correctly determining these regions ensures that each thread accesses the appropriate grid points while avoiding unintended overlap when writing results.
+\\\\
+We were then tasked with conducting a strong scaling study on CARC. The Center for Advanced Research Computing at UNM. We conducted a trial with one up to eight threads, and only one grid of size $n * n$, with $n = 840 * 6$. We generated plots of the time to run across five trials compared to the number of threads, considering only the minimum time, and the efficiency, where efficiency is defined as 
+\begin{equation}
+    E_p = \frac{T_1}{T_pp}
+\end{equation}
+where $T_1$ is the time for the serial case, and $T_p$ is the time for $p$ threads. We expected this to decrease with an increased number of threads, as even if run time decreases, the additional computational overhead of instantiating more threads will likely lead to a decrease in efficiency.
+
+\subsection{Method}
+Threads are created by specifying the function they will execute and the arguments that function requires. For example, we instantiate a thread as follows:
+
+\begin{verbatim}
+t = Thread(target=compute_finite_difference,
+           args=(n, nt, k, fcn, fpp_num))
+\end{verbatim}
+
+Here, \texttt{compute\_finite\_difference} is the function executed by the thread, while the arguments specify the problem size $n$, the total number of threads $nt$, the thread index $k$, the function \texttt{fcn} being differentiated, and \texttt{fpp\_num}, the array in which the numerical second-derivative estimates are stored. Each thread computes the portion of the domain assigned to it and writes its results to the corresponding portion of this array. After starting the threads, the main thread calls \texttt{t.join()} for each thread, ensuring that execution does not proceed beyond the join until that thread has completed its work.
+\\
+We then confirmed the accuracy of these methods by comparing the error, calculated using the $L2$ norm with error $e$ and grid spacing $h$, where $e$ is the difference between our approximation to the Laplacian, \texttt{fpp\_num}, and the analytical Laplacian \texttt{fpp\_2d}.
+\begin{equation}
+    e = \texttt{fpp\_num[1:-1, 1:-1]} - \texttt{fpp\_2d[1:-1, 1:-1]}
+\end{equation} 
+and 
+\begin{equation}
+    h = \frac{1}{n-1}
+\end{equation}
+The $L2$ norm is then calculated as 
+\begin{verbatim}
+    sqrt(sum(e**2) * h**2)
+\end{verbatim}
+The L2 norm is essentially the Euclidean norm with an additional term of $h^2$. This term is required because it accounts for the change in area as our grid size changes. That is, we must account for how much area of the domain this error is associated with. Note that we omitted the boundaries in this calculation, as evidenced by the array slicing in the equation for $e$. This is because we are using a five point finite differencing stencil defined as 
+\[
+\Delta u(x_i,y_j) \approx
+\frac{
+u(x_{i+1},y_j) + u(x_{i-1},y_j)
++ u(x_i,y_{j+1}) + u(x_i,y_{j-1})
+- 4u(x_i,y_j)
+}{h^2}.
+\]
+At boundary points, this stencil requires neighboring values outside the computational domain. Since our implementation applies this stencil only at interior points, we calculate the error only over the interior grid. We were prescribed boundary conditions however, although the exact second derivative can be evaluated at the boundary when the analytical solution is known, our numerical method does not approximate it there using the standard five point stencil. Therefore, we restrict our error calculation to the interior points where the numerical approximation is defined.
+\\ 
+We then ran experiments comparing this error to a quadratic reference curve to confirm the accuracy for 1, 2 and 3 threads. The error convergence plot for the single threaded case was provided in task 1 and as such will be omitted here.
+Our Reference curve must satisfy 
+\begin{equation}
+    E(h) = ch^2
+\end{equation}
+And therefore for $e_0, h_0$
+\begin{equation}
+    c = \frac{e_0}{h_0^2}
+\end{equation}
+Yielding the final reference curve 
+\begin{equation}
+    \frac{e_0}{h_0^2} h^2
+\end{equation}
+This was multiplied by two to shift it out of the way while leaving the slope unchanged.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{part2Resources/error2.png}
+    \caption{Two Thread Error Convergence Rate}
+    \label{fig:placeholder}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{part2Resources/error3.png}
+    \caption{Three Thread Error Convergence Rate}
+    \label{fig:placeholder}
+\end{figure}
+
+We also ran timing experiments to determine whether or not there was an increase in performance between 1, 2 and 3 threads. We conducted timings across five separate trials to account for operating system noise. 
+
+\begin{table}[H]
+    \centering
+    \caption{Finite Difference Timing Across Five Trials}
+    \label{tab:thread_errors}
+    \begin{tabular}{c|ccccc}
+        \hline
+        Threads & Trial 1 & Trial 2 & Trial 3 & Trial 4 & Trial 5 \\
+        \hline
+        \input{part2Resources/thread_timings.txt}
+    \end{tabular}
+\end{table}
+And these are the results of our strong scaling studies.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{part2Resources/timeVsThreads.png}
+    \caption{Time to Run Relative to Number of Threads}
+    \label{fig:placeholder}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.75\linewidth]{part2Resources/EfficiencyVsThreads.png}
+    \caption{Efficiency Relative to Number of Threads}
+    \label{fig:placeholder}
+\end{figure}
+
+\subsection{Interpretation} 
+As can be seen in the error convergence rate figures from section 2.2, our method appears to converge quadratically across all three thread counts. In each case, the error decreases at a rate consistent with the quadratic reference curve as the grid is refined, indicating that the numerical approximation maintains the expected order of accuracy regardless of the number of threads used. This suggests that parallelizing the finite differencing algorithm does not adversely affect the accuracy of the numerical results. As such we believe that parallelization can improve computational performance while retaining the expected accuracy of the original single threaded implementation.
+\\\\
+The results of the initial timing experiments, shown in the finite difference timing table from section 2.2, showed that using three threads resulted in a marked improvement in execution time compared to a single thread across all five trials. Three threads also consistently outperformed two threads, although the improvement was more marginal. These results suggest that parallelizing the computation reduced execution time, with the largest gains occurring when increasing the thread count from one to two and further, smaller gains when increasing it to three.
+\\\\
+The strong scaling study revealed that execution time generally decreased as the number of threads increased. Based on the timing plot, eight threads produced the shortest execution time, although the improvement over seven threads was minimal. The efficiency plot also showed that parallel efficiency decreased as the number of threads increased, indicating that performance gains did not scale linearly with the number of threads. This suggests that further increases in the thread count may yield diminishing returns, as parallelization overhead and other computational limitations increasingly offset the benefits of additional threads. Efficiency, defined as
+\[
+E_p = \frac{T_1}{pT_p},
+\]
+measures the observed speedup relative to the ideal speedup. The decrease in efficiency indicates that each additional thread contributed less to the overall speedup. Although eight threads provided the best performance among the configurations tested, the small improvement over seven threads suggests that the marginal benefit of adding another thread was limited.
+\end{document}

@@ -7,6 +7,7 @@ from poisson import poisson
 from check_matvec import check_matvec
 
 def L2norm(e, h):
+    return sqrt(sum(e**2) * h**2)
     '''
     Take L2-norm of e
     '''
@@ -57,19 +58,14 @@ def compute_finite_difference(n, nt, k, f, fpp_num):
     We assume that n/nt divides evenly.
 
     '''
-    # Task: 
     # Compute start, end
-    #
     # These indices allow you to index into arrays and grab only this thread's
     # portion.  For example, using the y = [0, 0.33, 0.66, 1.0] example above,
     # and considering thread 0, will yield start = 0 and end = 2, so that 
     # y[start:end] --> [0, 0.33]
     start = int(k * (n/nt))
-            # MAKE sure to cast start as an integer, start = int(...)
     end = int((k+1) * (n/nt))
-            # MAKE sure to cast end as an integer, end = int(...)
     
-    # Task:
     # Compute start_halo, and end_halo
     #
     # These values are the same as start and end, only they are expanded to 
@@ -87,8 +83,8 @@ def compute_finite_difference(n, nt, k, f, fpp_num):
     if (k == 0):
         start_halo = start
     else:
-        start_halo = start + 1
-    if (k == nt):
+        start_halo = start - 1
+    if (k == (nt-1)):
         end_halo = end
     else:
         end_halo = end + 1
@@ -99,65 +95,74 @@ def compute_finite_difference(n, nt, k, f, fpp_num):
     h = 1./(n-1)
     A *= 1/h**2
 
-    # Task:
+
     # Inspect a row or two of A, and verify that it's the correct 5 point stencil
     # You can print a few rows of A, with print(A[k,:])
-    < add statement to inspect a row or two of A >
+    #print(A[k,:])
 
-    # Task:
     # Construct a grid of evenly spaced points over this thread's halo region
     #
     # x_pts contains all of the points in the x-direction in this thread's halo region
     x_pts = linspace(0,1,n)
-    #
+
     # y_pts contains all of the points in the y-direction for this thread's halo region
     # For the above example and thread 1 (k=1), this is y_pts = [0.33, 0.66, 1.0]
-    y_pts = <linspace(start_halo*h, ... )> 
+    finalRow = (end_halo - 1) * h
+    y_pts = linspace(start_halo*h, finalRow, end_halo - start_halo) 
     
-    # Task:
     # There is no coding to do here, but examine how meshgrid works and 
     # understand how it gives you the correct uniform grid.
     X,Y = meshgrid(x_pts, y_pts)
     X = X.reshape(-1,)
     Y = Y.reshape(-1,) 
 
-    # Task:
-    # Compute local portion of f by using X and Y
-    f_vals = < f evaluated at X and Y >
-    
-    # Task:
-    # Compute the output, that is, the matrix A applied to f_vals 
-    output = < matrix applied to f_vals >
-             < But, output array should be postprocessed to exclude values in the halo region >
-    
-    # Task:
-    # Set the output array
-    fpp_num[ <insert indices> ] = output 
+    #print(f"Thread {k}: start={start}, end={end}")
+    #print(f"Thread {k}: start_halo={start_halo}, end_halo={end_halo}")
+    #print(f"Thread {k}: A.shape={A.shape}")
 
+    # Compute local portion of f by using X and Y
+    f_vals = f(X,Y)
+
+    #print(f"Thread {k}: f_vals.shape={f_vals.shape}")
+
+    # Compute the output, that is, the matrix A applied to f_vals 
+    output = A @ f_vals
+    
+    #print("First output values:", output[:10])
+    #print("First input values:", f_vals[:10])
+    #print(f"Thread {k}: output.shape={output.shape}")
+
+    output = output.reshape((end_halo - start_halo, n))
+    ownedFirst = start - start_halo
+    ownedLast = ownedFirst + (end - start)
+    
+    output = output[ownedFirst:ownedLast]
+    
+    # Set the output array (flatten first)
+    fpp_num[start*n:end*n] = output.reshape(-1) 
+
+
+    #print("First numerical values:", fpp_num[:10])
 
 def fcn(x,y):
-    '''
-    This is the function we are studying
-    '''
     return cos((x+1)**(1./3.) + (y+1)**(1./3.)) + sin((x+1)**(1./3.) + (y+1)**(1./3.))
 
 def fcn_prime_prime(x,y):
-    '''
-    This is the second derivative of the function we are studying
-    '''
-    # Task:
-    # This function should return the second derivative of "fcn" 
-    # The second derivative should contain terms like:
-    # -cos((x+1)**(1./3.) + (y+1)**(1./3.))*(1./9.)*(x+1)**(-4./3)
-    f_xx = 0
-    f_yy = -cos((x+1)**(1./3.) + (y+1)**(1./3.))*(1./9.)*(x+1)**(-4./3)
+    arg = (x + 1)**(1./3.) + (y + 1)**(1./3.)
+
+    f_xx = -(cos(arg) + sin(arg)) * (1./9.) * (x + 1)**(-4./3.) \
+           - (cos(arg) - sin(arg)) * (2./9.) * (x + 1)**(-5./3.)
+
+    f_yy = -(cos(arg) + sin(arg)) * (1./9.) * (y + 1)**(-4./3.) \
+           - (cos(arg) - sin(arg)) * (2./9.) * (y + 1)**(-5./3.)
+
     return f_xx + f_yy
 
 
 ##
 # Here are three problem size options for running.  The instructor has chosen these
 # for you.  
-option = 3
+option = 1
 if option == 1:
     # Choose this if doing a final run on CARC for your strong scaling study
     
@@ -174,10 +179,11 @@ elif option == 2:
     
     # Problem sizes is an array of grid sizes "n" to loop over
     problem_sizes = 210*arange(1,6) 
+    # this is 5 grid sizes, using 5 trials -> 1 thread per trial, 25 total calls to Thread.
     
     # For each grid size, experiment with all of the different thread numbers in num_threads 
     # First, get this to work for 1 thread, then try for 2 and 3 threads
-    num_threads = [1] 
+    num_threads = [1,2,3] 
 
 elif option == 3:
     # Choose this for code development and debugging on your laptop/lab machine
@@ -192,54 +198,67 @@ elif option == 3:
 else:
     print("Incorrect Option!")
 
+# if option == 3:
+#     n = int(problem_sizes[0])
+#     h = 1.0 / (n-1)
+
+#     A = poisson((n, n), format='csr')
+#     A *= 1.0 / h**2
+
+#     print("\nCorner (row 0):")
+#     print(A.getrow(0)) 
+
+#     print("\nBoundary wall (row 2):")
+#     print(A.getrow(2))
+
+#     print("\nInterior (row 14):")
+#     print(A.getrow(14)) 
+
 ##
 # Begin main computation loop
 ##
 
-# Task:
+
 # Initialize data arrays to store error values and timings results
 # You will need to store data for a total number of experiments equal to 
 #       (size of num_threads) X (size of problem_sizes)
-#
+errorVals = zeros((len(num_threads), len(problem_sizes)))
+timingRes = zeros((len(num_threads), len(problem_sizes)))
+
 # That is, you will run one timing experiment for each combination of 
 # num_threads and problem_sizes
 #
-# < initialize arrays for error and timings > 
-
+numTrials = 5
 # Loop over various numbers of threads
 for i,nt in enumerate(num_threads):
     # Loop over various problem sizes 
     for j,n in enumerate(problem_sizes):
-        
-        # Task:
         # Run a timing experiment for nt threads and a Poisson matrix 
         # from a grid of size (n x n)
-        #
-        # In order to time your code, look to Lab/Lecture 14, where
-        # you practiced running multiple experiments and taking the
-        # minimum runtime as the official timing result
-        #
-        # For an example on how to run threaded code multiple times for 
-        # the purposes of obtaining a timing result, look at this file 
-        #   course_repository/labs/lab4/threading_example.py
-        # which is covered in lab17
-        #
-        # The function to be threaded is compute_finite_difference, 
-        # so you will have a call like
-        #   t_list.append(Thread(target=compute_finite_difference, args=(n, nt, k, ...) )) 
-        # when implementing threading as in threading_example.py
-        #       
-        # Side note: You will need an empty array to hold the result of 
-        # the function  compute_finite_difference(...).  That is, this 
-        # output is the array passed in as fpp_num to 
-        # compute_finite_difference(...)
+        h = 1. / (n-1)
+        fpp_num = zeros(n*n) # will be zero everywhere except where this thread writes to it
+        trialTimings = []
+
+        for trial in range(numTrials):
+            fpp_num[:] = 0.0 # zero out
+            threads = []
+            startTime = time.perf_counter()
+
+            for k in range(nt):
+                t = Thread(target=compute_finite_difference, args=(n,nt,k,fcn,fpp_num))
+                threads.append(t)
+                t.start()
+            for t in threads:
+                t.join()
+            endTime = time.perf_counter()
+            trialTimings.append(endTime - startTime)
+        timingRes[i, j] = min(trialTimings)
 
 
-        # Task:
         # Use testing-harness to make sure your threaded matvec works
         # This call should print zero (or a numerically zero value)
         if option == 2 or option == 3:
-            check_matvec(<output array written by threaded compute_finite_difference>, n, fcn)
+            check_matvec(fpp_num, n, fcn)
         
         # Construct an exact solution for f-prime-prime, call it fpp, for
         # computing the L2-norm of the error 
@@ -264,8 +283,14 @@ for i,nt in enumerate(num_threads):
         # properly accounts for the boundary terms that go on the right-hand-side 
         # (see lecture slides) 
 
-        # Task:
-        # Make sure to store your timing result
+        fpp_num_2d = fpp_num.reshape((n,n)) # our results
+        fpp_2d = fpp.reshape((n,n)) # true results
+
+        # IGNORES BOUNDARY 
+        e = fpp_num_2d[1:-1, 1:-1] - fpp_2d[1:-1, 1:-1]
+        errorVals[i,j] = L2norm(e,h)
+        #print(f"Threads={nt}, n={n}, " f"L2 error={errorVals[i,j]}, " f"minimum time={timingRes[i,j]:.6e} s")
+
 
     ##
     # End Loop over various grid-sizes
@@ -276,17 +301,40 @@ for i,nt in enumerate(num_threads):
     #
     # Recommended to comment out plotting before running on CARC 
     #
-    # For instance, you could plot with something like this,
-    #pyplot.loglog(problem_sizes, <array slice of error values>) 
-    #pyplot.loglog(problem_sizes, <reference quadratic convergence data>)
-    #<insert nice formatting options with large axis labels, tick fontsizes, and large legend labels>
-    #pyplot.savefig('error'+str(i)+'.png', dpi=500, format='png', bbox_inches='tight', pad_inches=0.0,)
+
+    # pyplot.figure()
+    # pyplot.loglog(problem_sizes, errorVals[i, :], 'o-', label=f'{nt} threads')
+    # hVals = 1./(problem_sizes - 1)
+    # firstH = 1./(problem_sizes[0] - 1)
+    
+    # theoretically, our code satisfies E(h)=c*(h^2) -> c = e0/h0^2 => ref = e0 / h0^2 * h^2
+    
+    # reference = 2.0 * (errorVals[i, 0] / (firstH**2)) * hVals**2
+    # mult by 2 so that both can be seen
+
+    # print("problem sizes:", problem_sizes)
+    # print("errors:", errorVals[i, :])
+    # print("reference:", reference)
+
+    # pyplot.loglog(problem_sizes, reference, '--', label='Quadratic reference')
+
+    # pyplot.xlabel('Grid size n', fontsize=14)
+    # pyplot.ylabel(r'$L^2$ error', fontsize=14)
+    # pyplot.title(f'Convergence with {nt} threads', fontsize=16)
+    # pyplot.xticks(fontsize=12)
+    # pyplot.yticks(fontsize=12)
+    # pyplot.legend(fontsize=12)
+    # pyplot.grid(True, which='both')
+
+    # pyplot.savefig('error' + str(nt) + '.png', dpi=500, format='png', bbox_inches='tight', pad_inches=0.0)
+
+    # pyplot.close()
 
 
 # Task:
 # Save timing results to text file
 # For instance, if your timings results are in an array named "timings", 
 # you can output these results to file, with
-# savetxt('timings.txt', timings)
+#savetxt('timingsTo8Threads.txt', timingRes)
 
 
