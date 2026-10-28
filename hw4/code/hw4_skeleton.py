@@ -198,6 +198,22 @@ elif option == 3:
 else:
     print("Incorrect Option!")
 
+# if option == 3:
+#     n = int(problem_sizes[0])
+#     h = 1.0 / (n-1)
+
+#     A = poisson((n, n), format='csr')
+#     A *= 1.0 / h**2
+
+#     print("\nCorner (row 0):")
+#     print(A.getrow(0)) 
+
+#     print("\nBoundary wall (row 2):")
+#     print(A.getrow(2))
+
+#     print("\nInterior (row 14):")
+#     print(A.getrow(14)) 
+
 ##
 # Begin main computation loop
 ##
@@ -286,33 +302,33 @@ for i,nt in enumerate(num_threads):
     # Recommended to comment out plotting before running on CARC 
     #
 
-    #pyplot.figure()
-    #pyplot.loglog(problem_sizes, errorVals[i, :], 'o-', label=f'{nt} threads')
-    #hVals = 1./(problem_sizes - 1)
-    #firstH = 1./(problem_sizes[0] - 1)
+    # pyplot.figure()
+    # pyplot.loglog(problem_sizes, errorVals[i, :], 'o-', label=f'{nt} threads')
+    # hVals = 1./(problem_sizes - 1)
+    # firstH = 1./(problem_sizes[0] - 1)
     
     # theoretically, our code satisfies E(h)=c*(h^2) -> c = e0/h0^2 => ref = e0 / h0^2 * h^2
     
-    #reference = 2.0 * (errorVals[i, 0] / (firstH**2)) * hVals**2
+    # reference = 2.0 * (errorVals[i, 0] / (firstH**2)) * hVals**2
     # mult by 2 so that both can be seen
 
-    #print("problem sizes:", problem_sizes)
-    #print("errors:", errorVals[i, :])
-    #print("reference:", reference)
+    # print("problem sizes:", problem_sizes)
+    # print("errors:", errorVals[i, :])
+    # print("reference:", reference)
 
-    #pyplot.loglog(problem_sizes, reference, '--', label='Quadratic reference')
+    # pyplot.loglog(problem_sizes, reference, '--', label='Quadratic reference')
 
-    #pyplot.xlabel('Grid size n', fontsize=14)
-    #pyplot.ylabel(r'$L^2$ error', fontsize=14)
-    #pyplot.title(f'Convergence with {nt} threads', fontsize=16)
-    #pyplot.xticks(fontsize=12)
-    #pyplot.yticks(fontsize=12)
-    #pyplot.legend(fontsize=12)
-    #pyplot.grid(True, which='both')
+    # pyplot.xlabel('Grid size n', fontsize=14)
+    # pyplot.ylabel(r'$L^2$ error', fontsize=14)
+    # pyplot.title(f'Convergence with {nt} threads', fontsize=16)
+    # pyplot.xticks(fontsize=12)
+    # pyplot.yticks(fontsize=12)
+    # pyplot.legend(fontsize=12)
+    # pyplot.grid(True, which='both')
 
-    #pyplot.savefig('error' + str(nt) + '.png', dpi=500, format='png', bbox_inches='tight', pad_inches=0.0)
+    # pyplot.savefig('error' + str(nt) + '.png', dpi=500, format='png', bbox_inches='tight', pad_inches=0.0)
 
-    #pyplot.close()
+    # pyplot.close()
 
 
 # Task:
