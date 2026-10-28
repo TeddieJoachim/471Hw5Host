@@ -87,8 +87,8 @@ The matrix-vector multiplication was also checked using the provided \texttt{che
 function, which returned a relative difference of 0.0. 
 
 \subsection{Discussion} 
-The log-log convergence plot shows that the $L_2$ error decreases as the grid size $n$ increases. The numerical error follows approximately the same slop of the quadratic reference curve, indicating second-order convergence. This agrees with the expected accuracy of the five-point finite-difference stencil, where the error decreases proportionally to $h^2$. \\\\
-The CSR matrix rows also demonstrate how the finite-difference stencil changes depending on the location of a grid point. Corner points have two neighboring grid points, boundary wall points have three, and interior points have four. As result, their matrix rows contain three, four, and five nonzero entries, respectively. The central coefficient remains $\frac{-4}{h^2}$, while connections to points outside the domain are excluded. \\\\
+The log-log convergence plot shows that the $L_2$ error decreases as the grid size $n$ increases. The numerical error follows approximately the same slope of the quadratic reference curve, indicating second-order convergence. This agrees with the expected accuracy of the five-point finite-difference stencil, where the error decreases proportionally to $h^2$. \\\\
+The CSR matrix rows also demonstrate how the finite-difference stencil changes depending on the location of a grid point. Corner points have two neighboring grid points, boundary wall points have three, and interior points have four. As a result, their matrix rows contain three, four, and five nonzero entries, respectively. The central coefficient remains $\frac{-4}{h^2}$, while connections to points outside the domain are excluded. \\\\
 Finally, the \texttt{check\_matvec()} function returned a relative difference of $0.0$, confirming that the computed matrix-vector multiplication agrees with the reference implementation for the tested grid. Together, the verification result and convergence plot support the correctness and expected accuracy of the numerical method. 
 
 \newpage
