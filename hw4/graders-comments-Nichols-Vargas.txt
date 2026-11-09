@@ -1,0 +1,125 @@
+100 points total
+
+5/5 points for structure of repository
+ - There must be directories, 
+    hw4 
+    hw4/report
+    hw4/code
+
+ - The report must be in
+    hw4/report/_some_report.pdf
+
+ - There must be readme file
+   hw4/README.txt or hw4/README.md
+
+   This readme should describe where the report.pdf is, and tell you
+   how to run the code.  You should be able to run the student's
+   code and reproduce some of their results quickly and easily based 
+   on the README.  If you cannot, deduct points. 
+
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+50/50 points Part 1:  Serial
+
+25/25 points for code
+
+- (20/20 pts) With 1 thread (nt=1) and grid size option 2, does the code run?
+  Does the code compute the expected quadratic decrease in error?  
+  The README for the code should say something about how to run this.
+  [ Partial credit is definitely available here)
+
+- (1/1 pts) Correctly compute the error vector e with fcnpp
+
+- (2/2 pts) Correctly implement an L2-norm of the error ( ||e||_L2 = h sqrt(<e, e>) ) 
+
+- (2/2 pts) Correctly account for boundary conditions for N, S, E, W walls
+
+
+
+25/25 points for report
+
+- (7/7 pts) Report for serial part is well-structured like in the template 
+  -- Cover page, and each task having a what, how, and why description. Note
+     that it's not absolutely required to have subsections on what, how, and why,
+     but these three parts of each task should be addressed.
+  -- For instance, here, they need to mention/discuss that they are
+     implementing a mat-vec, and measuring the L2-norm of the error for a
+     finite-difference computation, and so on.  The need to describe the "what"
+     and "how" and "why".
+
+- (12/12 pts) Log-log plot of error with reference curve presented?  Is the
+  observed convergence discussed?  E.g., "we observed O(h^{something})
+  convergence which is (or is not) what we expected because the theory
+  says...".  Even if the convergence isn't the expected quadratic, full credit
+  is possible if the convergence is correctly discussed.
+
+- (6/6 pts) 2 pts each: are three matrix rows printed out in the report and
+  discussed?  Is each matrix row for a different part of the domain, e.g.,
+  corner, East wall, and center? 
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+45/45 points Part 2:  Parallel threading
+
+25/25 points for code
+
+- (10/10 pts) Does code run for nt=2, 3? 
+  -- Does the code compute the expected quadratic decrease in error?  
+     The README for the code should say something about how to run this.
+     [ Partial credit is definitely available here)
+
+- (10/10 pts) Provide .sh SBATCH script(s) for running on CARC.  
+  -- Do they discuss how to run their code on CARC?  Can you conclude that they
+     actually did runs on CARC?
+
+- (1/1 pts) Correctly construct thread object 
+
+- (1/1 pts) Are adequate timings taken in the code for the matvec? 
+
+- (1/1 pts) Correctly launch and join all thread objects 
+
+- (1/1 pts) Inside compute_fd, correctly compute start, end, start_halo, end_halo 
+
+- (1/1 pts) Inside compute_fd, correct looking threaded mat-vec code for 
+          computing grid, fvals, A*fvals, and writing output to fpp_num
+          --> Judge final correctness of code by running it with nt = 2,3
+
+
+20/20 points for report
+- (5/5 pts) Report for parallel part is well-structured like in the template 
+  -- Grade same as for serial part, only now they need to mention/discuss and
+     they are going to thread the above part.  
+   
+     There should be some mention/discussion of "How", i.e., how they thread by
+     splitting up rows among threads evenly.
+   
+     The grading here is like grading an essay...they may have more discussion in
+     part 1 on what they are doing, and discussion about threading there.  This
+     is fine, as long as it reads logically and is easy to understand. 
+
+- (4/4 pts) Demostrate that threaded code with (nt=1,2,3) gives same convergence
+  plot.  Should provide at least one Log-log plot here to discuss. 
+
+  -- Is the observed convergence discussed?  E.g., "we observed O(h^{something})
+     convergence which is (or is not) what we expected because the theory
+     says...".  Even if the convergence isn't the expected quadratic, full credit
+     is possible if the convergence is correctly discussed.
+
+- (1/1 pts) Do they discuss some preliminary timings from their laptop/desktop?
+
+- (10/10 pts) CARC Results
+   
+   - (8/8 pts) Strong scaling plot and discussion.
+      -- What is the best number of threads for overall run-time?
+      -- Do you see much performance gain when using larger numbers of threads? Explain.
+      -- Does your strong scaling plot “roll-over”, that is increase for larger numbers of threads?
+   
+   - (4/4 pts) Efficiency plot and discussion
+      -- Is efficiency going up, down, staying level as num-threads increases?
+         Is this expected?
+
+   -- Discuss anything else unexpected in the plots
+
+Graders comments: Nichols and Vargas 100/100
+
