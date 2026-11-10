@@ -1,0 +1,156 @@
+// import a renderer object
+import { Renderer } from "./renderer.js";
+let Module; // C functions will be called through module._(a c func name)
+let animationId = null;
+let simulationRunning = false;
+
+// grab webgl rendering context
+const canvas = document.getElementById("gameCanvas");
+const gl = canvas.getContext("webgl2");
+
+if (!gl) {
+  console.error("Ruh roh couldn't load webgl2");
+}
+
+// async needed so that javascript doesn't just mosey along and do other stuff
+async function startGame() {
+  Module = await createWASMModule(); // load C module
+  const params = getParams();
+  validateParams(params);
+  Module._setParameters(
+    params.numBirds,
+    params.foodFlag ? 1 : 0,
+    params.alpha,
+    params.gamma1,
+    params.gamma2,
+    params.kappa,
+    params.rho,
+    params.delta
+  );
+
+  document.getElementById("stopButton").addEventListener("click", stopGame);
+
+  document.querySelectorAll("#controls input").forEach(input => {input.addEventListener("change", restartGame);});
+
+  restartGame();
+}
+
+startGame();
+
+
+function runGame(Module, params) {
+  const numBoids = params.numBirds;
+  const boidDim = Module._getDim();
+  const numPositions = numBoids * boidDim;
+  // Module.HEAPU8.buffer is the heap memory of WebAssembly. 
+  // Module._getBoidPos returns the address we begin reading  
+  // we read numPositions (bytes * sizeof(float)) = 4 bytes * numFloats
+  const sharedHeapCoords = new Float32Array(Module.HEAPU8.buffer, Module._getBoidPositions(), numPositions);
+  if (sharedHeapCoords == null) {
+    console.log("Likely malloc failure.");
+    return;
+  }
+  const renderer = new Renderer(canvas, boidDim);
+
+  const delTime = 1.0/60.0; 
+  let prevTime = null;
+  let accumulator = 0.0;
+
+  // currTime is supplied by requestAnimationFrame
+  function gameLoop(currTime) {
+    if (prevTime == null) prevTime = currTime; // don't panic and update the simulation a bunch on first iteration
+    const elapsedTime = (currTime - prevTime) / 1000.0;
+    prevTime = currTime;
+
+    accumulator += elapsedTime;
+    while (accumulator >= delTime) {
+      Module._advanceBoids(delTime); // Update shared heap memory
+      accumulator -= delTime;
+    }
+
+    // render using sharedHeapCoords (this is a pointer, not a copy!)
+    renderer.render(sharedHeapCoords, numBoids, boidDim);
+
+    // next frame
+    if (simulationRunning) {
+      animationId = requestAnimationFrame(gameLoop);
+    }
+  }
+
+
+  simulationRunning = true;
+  animationId = requestAnimationFrame(gameLoop);
+}
+
+
+function getParams() {
+  return {
+    foodFlag: document.getElementById("foodFlag").checked,
+    alpha: Number(document.getElementById("alpha").value),
+    gamma1: Number(document.getElementById("gamma1").value),
+    gamma2: Number(document.getElementById("gamma2").value),
+    kappa: Number(document.getElementById("kappa").value),
+    rho: Number(document.getElementById("rho").value),
+    delta: Number(document.getElementById("delta").value),
+    numBirds: Number(document.getElementById("numBirds").value)
+  };
+}
+
+function validateParams(params) {
+  if (!Number.isFinite(params.alpha) ||
+    !Number.isFinite(params.gamma1) ||
+    !Number.isFinite(params.gamma2) ||
+    !Number.isFinite(params.kappa) ||
+    !Number.isFinite(params.rho) ||
+    !Number.isFinite(params.delta)) {
+  throw new Error("One or more parameters are invalid.");
+  }
+
+  if (params.delta <= 0) {
+    throw new Error("Delta must be positive.");
+  }
+
+  if (!Number.isInteger(params.numBirds) || params.numBirds < 10) {
+    throw new Error("Number of birds must be an integer >= 10.");
+  }
+}
+
+function stopGame() {
+  if (animationId !== null) {
+    cancelAnimationFrame(animationId);
+    animationId = null;
+  }
+
+  if (simulationRunning) {
+    simulationRunning = false;
+    Module._freeBoids();
+  }
+}
+
+function restartGame() {
+  // stop the old simulation if one is running
+  stopGame();
+
+  try {
+    const params = getParams();
+    validateParams(params);
+
+    Module._setParameters(
+      params.numBirds,
+      params.foodFlag ? 1 : 0,
+      params.alpha,
+      params.gamma1,
+      params.gamma2,
+      params.kappa,
+      params.rho,
+      params.delta
+    );
+
+    Module._initializeBoids();
+
+    runGame(Module, params);
+
+  } catch (error) {
+    console.error("Could not restart simulation:", error);
+  }
+}
