@@ -11,6 +11,8 @@ typedef struct Boid {
 typedef struct Parameters {
   int numBirds;
   int foodFlag;
+  float foodX;
+  float foodY;
   double alpha;
   double gamma1;
   double gamma2;

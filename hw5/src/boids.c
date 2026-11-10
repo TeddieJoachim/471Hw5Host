@@ -13,7 +13,7 @@
 #endif
 
 // Necessary preprocessor directives for steering away from boundaries and staying within webgl clipping plane
-#define NUM_DIM 3
+#define NUM_DIM 2
 #define WORLD_MIN -1.0f // thresholds for detecting collision with boundary, based on webgl vals [-1,1]
 #define WORLD_MAX 1.0f
 #define BOUNDARY_PROXIMITY_THRESHOLD 0.5f
@@ -25,16 +25,18 @@
 Parameters params;
 
 EMSCRIPTEN_KEEPALIVE
-void setParameters(int numBirds, int foodFlag, double alpha, double gamma1, double gamma2, double kappa, double rho, double delta) 
+void setParameters(int numBirds, int foodFlag, float foodX, float foodY, double alpha, double gamma1, double gamma2, double kappa, double rho, double delta) 
 {
   params.numBirds = numBirds;
   params.foodFlag = foodFlag;
   params.alpha = alpha;
-  params.gamma1 = gamma1;
-  params.gamma2 = gamma2;
-  params.kappa = kappa;
-  params.rho = rho;
-  params.delta = delta;
+  params.gamma1 = gamma1; // leader food desire
+  params.gamma2 = gamma2; // leader charisma
+  params.kappa = kappa; // cohesion weight
+  params.rho = rho; // repulsion weight
+  params.delta = delta; // numerical tolerance (avoid division by 0)
+  params.foodX = foodX;
+  params.foodY = foodY;
 }
 
 Boid* themBoids = NULL; // totally safe, production level code. the array of Boid structs
@@ -143,9 +145,52 @@ void clampAtBoundaries(Boid* thisBoid, int coordIdx)
   }
 }
 
+
+// These functions are the forcing terms defined in problem assignment. 
+// My current idea is to calculate these on a bird to bird basis, so rather than a 
+// massive N x 2 matrix, these calculate each birds entry in that matrix.
+void foodForce(float* targetVec, const float* leaderPos) 
+{
+  float foodX = params.foodX;
+  float foodY = params.foodY;
+  float foodPos[NUM_DIM] = {foodX, foodY};
+  vectorSubtract(targetVec, &foodPos[0], leaderPos, NUM_DIM);
+  vectorScalar(targetVec, params.gamma1, NUM_DIM);
+}
+
+void leaderForce(float* targetVec, const float* leaderPos, const float* myPos)
+{
+  vectorSubtract(targetVec, leaderPos, myPos, NUM_DIM);
+  vectorScalar(targetVec, params.gamma2, NUM_DIM);
+}
+
+void cohesionForce(float* targetVec, const float* myPos, const float* avgPos)
+{
+  vectorSubtract(targetVec, avgPos, myPos, NUM_DIM);
+  vectorScalar(targetVec, params.kappa, NUM_DIM);
+}
+
+void repulsionForces(float repulsionVecs[5][NUM_DIM], const float* myPos, const float neighbors[5][NUM_DIM])
+{
+  float numerator, denominator;
+
+  for (int nI = 0; nI < 5; nI++) 
+  {
+    for (int cI = 0; cI < NUM_DIM; cI++)
+    {
+      numerator = params.rho * (myPos[cI] - neighbors[nI][cI]);
+      denominator = ((myPos[cI] - neighbors[nI][cI]) * (myPos[cI] - neighbors[nI][cI])) + params.delta;
+      repulsionVecs[nI][cI] = numerator / denominator;
+    }
+  }
+}
+// End forcing terms
+
+
+
 // What WebGl context calls, updates our simulation internally using RK4, then updates shared memory
 EMSCRIPTEN_KEEPALIVE
-void advanceBoids(float delT)
+void RK4()
 {
   
 }

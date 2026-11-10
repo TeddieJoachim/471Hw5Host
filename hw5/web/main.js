@@ -25,7 +25,9 @@ async function startGame() {
     params.gamma2,
     params.kappa,
     params.rho,
-    params.delta
+    params.delta,
+    params.foodX,
+    params.foodY
   );
 
   document.getElementById("stopButton").addEventListener("click", stopGame);
@@ -64,7 +66,7 @@ function runGame(Module, params) {
 
     accumulator += elapsedTime;
     while (accumulator >= delTime) {
-      Module._advanceBoids(delTime); // Update shared heap memory
+      Module._RK4(); // Update shared heap memory
       accumulator -= delTime;
     }
 
@@ -143,7 +145,9 @@ function restartGame() {
       params.gamma2,
       params.kappa,
       params.rho,
-      params.delta
+      params.delta,
+      params.foodX,
+      params.foodY
     );
 
     Module._initializeBoids();
