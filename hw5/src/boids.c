@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#include <float.h>
 #include "vector.h"
 #include "boids.h"
 
@@ -187,11 +188,112 @@ void repulsionForces(float repulsionVecs[5][NUM_DIM], const float* myPos, const 
 // End forcing terms
 
 
+void getNeighbors(Boid* me, float neighbors[5][NUM_DIM])
+{
+  float distances[params.numBirds];
+  float minDistances[5] = {FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX};
+  float differenceInPos[NUM_DIM];
+
+  // get distance to every bird
+  for (int bI = 0; bI < params.numBirds; bI++)
+  {
+    if (themBoids[bI].myIdx != me->myIdx) 
+    {
+      vectorSubtract(differenceInPos, me->position, themBoids[bI].position, NUM_DIM);
+      distances[bI] = vecMagnitude(differenceInPos, NUM_DIM);
+    }
+    else distances[bI] = 0;
+  }
+  // now select the 5 smallest distances (excluding yourself) as neighbors
+  // for every distance, check if any of our 5 neighbors can be replaced
+  for (int dI = 0; dI < params.numBirds; dI++) // for every bird/distance
+  {
+    if (dI == me->myIdx) continue; // skip yourself
+    for (int nI = 0; nI < 5; nI++) // for every neighbor
+    {
+      if (distances[dI] < minDistances[nI]) // if distance to this bird is less than a previous min
+      {
+        // we should shift our minDistances to make room for the new min
+        // have a new incoming min -> copy the last distance into the second to last,
+        // then set last neighbor to be second to last neighbor, and repeat.
+        // when you perform the shift in minDistances, update the neighbors as well
+        // eg minDist = {2, 4, 6, 8, 10}
+        // new min = 1, say nI = 0 -> 
+        // {2, 4, 6, 8, 8} -> {2, 4, 6, 6, 8} -> {2, 4, 4, 6, 8} -> {2, 2, 4, 6, 8} -> {1, 2, 4, 6, 8}
+        for (int shift = 4; shift > nI; shift--) 
+        {
+          minDistances[shift] = minDistances[shift-1];
+          for (int cI = 0; cI < NUM_DIM; cI++)
+          {
+            neighbors[shift][cI] = neighbors[shift - 1][cI];
+          }
+        }
+        minDistances[nI] = distances[dI];
+        for (int cI = 0; cI < NUM_DIM; cI++) // write this birds coordinates into this neighbors
+        {
+          neighbors[nI][cI] = themBoids[dI].position[cI];
+        }
+        break; // found a new neighbor
+      }
+    }
+  }
+
+}
+
+void getFlockAvg(float* flockAverage)
+{
+  zeroVec(flockAverage, NUM_DIM);
+  
+  for (int bI = 0; bI < params.numBirds; bI++)
+  {
+    vectorAdd(flockAverage, themBoids[bI].position, flockAverage, NUM_DIM);
+  }
+  vectorScalar(flockAverage, 1.0/params.numBirds, NUM_DIM);
+}
+
+void applyForcing()
+{
+  float getFood[NUM_DIM];
+  float followLead[NUM_DIM];
+  float cohesion[NUM_DIM];
+  float repulsion[5][NUM_DIM];
+  float neighborPositions[5][NUM_DIM];
+  float flockAverage[NUM_DIM];
+  Boid* currBird; 
+  Boid* leaderBird;
+
+  leaderBird = &themBoids[0];
+  getFlockAvg(flockAverage);
+  for (int bI = 0; bI < params.numBirds; bI++)
+  {
+    currBird = &themBoids[bI];
+    getNeighbors(currBird, neighborPositions);
+    if (currBird->myIdx == 0 && params.foodFlag) // I am leader and food flag is high
+    {
+      // vector steering us towards food written into getFood
+      foodForce(getFood, leaderBird->position);
+    }
+    else // I am not the leader 
+    {
+      // vectors steering us in the forcing directions
+      leaderForce(followLead, leaderBird->position, currBird->position);
+      cohesionForce(cohesion, currBird->position, flockAverage);
+      repulsionForces(repulsion, currBird->position, neighborPositions);
+    }
+    
+  }
+}
 
 // What WebGl context calls, updates our simulation internally using RK4, then updates shared memory
 EMSCRIPTEN_KEEPALIVE
-void RK4()
+void RK4(float t, float delT)
 {
+  // in our case, B' = F -> bird velocities (position') = forcing terms
+  // B(t0) = random initial positions 
+  // t_0 assumed to be 0 -> t_i = h*i
+  // so our RK4 will calculate from i = 0 to n-1 (passed as arguments)
+
+  
   
 }
 
