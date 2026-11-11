@@ -19,16 +19,18 @@ async function startGame() {
   validateParams(params);
   Module._setParameters(
     params.numBirds,
+    params.foodMoves ? 1 : 0,
     params.foodFlag ? 1 : 0,
+    params.foodX,
+    params.foodY,
     params.alpha,
     params.gamma1,
     params.gamma2,
     params.kappa,
     params.rho,
-    params.delta,
-    params.foodX,
-    params.foodY
+    params.delta
   );
+  Module._printParameters();
 
   document.getElementById("stopButton").addEventListener("click", stopGame);
 
@@ -57,8 +59,10 @@ function runGame(Module, params) {
   const delTime = 0.01; 
   let simulationTime = 0;
 
+  console.log("Initial positions:", sharedHeapCoords.slice(0, 10));
   function gameLoop() {
     Module._RK4(simulationTime, delTime) // step simulation
+    //console.log("Positions:", sharedHeapCoords.slice(0, 10));
     // increment clock time (even though our ODE is not really time dependent, I'm including it for future implememtnations)
     simulationTime += delTime; 
     
@@ -78,7 +82,10 @@ function runGame(Module, params) {
 function getParams() {
   return {
     foodFlag: document.getElementById("foodFlag").checked,
+    foodMoves: document.getElementById("foodMoves").checked,
     alpha: Number(document.getElementById("alpha").value),
+    foodX: Number(document.getElementById("foodX").value),
+    foodY: Number(document.getElementById("foodY").value),
     gamma1: Number(document.getElementById("gamma1").value),
     gamma2: Number(document.getElementById("gamma2").value),
     kappa: Number(document.getElementById("kappa").value),
@@ -127,18 +134,19 @@ function restartGame() {
     const params = getParams();
     validateParams(params);
 
-    Module._setParameters(
-      params.numBirds,
-      params.foodFlag ? 1 : 0,
-      params.alpha,
-      params.gamma1,
-      params.gamma2,
-      params.kappa,
-      params.rho,
-      params.delta,
-      params.foodX,
-      params.foodY
-    );
+  Module._setParameters(
+    params.numBirds,
+    params.foodMoves ? 1 : 0,
+    params.foodFlag ? 1 : 0,
+    params.foodX,
+    params.foodY,
+    params.alpha,
+    params.gamma1,
+    params.gamma2,
+    params.kappa,
+    params.rho,
+    params.delta
+  );
 
     Module._initializeBoids();
 

@@ -10,6 +10,7 @@ typedef struct Boid {
 
 typedef struct Parameters {
   int numBirds;
+  int foodMoves;
   int foodFlag;
   float foodX;
   float foodY;
@@ -22,12 +23,12 @@ typedef struct Parameters {
 } Parameters;
 
 // Sets parameters as passed in from user
-void setParameters(int numBirds, int foodFlag, float foodX, float foodY, double alpha, double gamma1, double gamma2, double kappa, double rho, double delta);
+void setParameters(int numBirds, int foodMoves, int foodFlag, float foodX, float foodY, double alpha, double gamma1, double gamma2, double kappa, double rho, double delta);
 // MALLOCS Boids and their fields as well as shared boidPositions, and assigns initial values. Sets positions to random coordinates.
 void initializeBoids();
 
 // Will call RK4 to update bird velocities
-void advanceBoids(float delT);
+void RK4(float t, float delT);
 
 // returns base pointer to shared heap memory with WebAssembly
 float* getBoidPositions();

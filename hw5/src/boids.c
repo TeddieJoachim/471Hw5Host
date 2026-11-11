@@ -28,9 +28,10 @@
 Parameters params;
 
 EMSCRIPTEN_KEEPALIVE
-void setParameters(int numBirds, int foodFlag, float foodX, float foodY, double alpha, double gamma1, double gamma2, double kappa, double rho, double delta) 
+void setParameters(int numBirds, int foodMoves, int foodFlag, float foodX, float foodY, double alpha, double gamma1, double gamma2, double kappa, double rho, double delta) 
 {
   params.numBirds = numBirds;
+  params.foodMoves = foodMoves;
   params.foodFlag = foodFlag;
   params.alpha = alpha;
   params.gamma1 = gamma1; // leader food desire
@@ -40,6 +41,28 @@ void setParameters(int numBirds, int foodFlag, float foodX, float foodY, double 
   params.delta = delta; // numerical tolerance (avoid division by 0)
   params.foodX = foodX;
   params.foodY = foodY;
+}
+EMSCRIPTEN_KEEPALIVE
+void printParameters()
+{
+  printf("===== SIMULATION PARAMETERS =====\n");
+
+  printf("numBirds: %d\n", params.numBirds);
+  printf("foodFlag: %d\n", params.foodFlag);
+  printf("foodMoves: %d\n", params.foodMoves);
+
+  printf("foodX: %f\n", params.foodX);
+  printf("foodY: %f\n", params.foodY);
+
+  printf("alpha: %f\n", params.alpha);
+  printf("gamma1: %f\n", params.gamma1);
+  printf("gamma2: %f\n", params.gamma2);
+
+  printf("kappa: %f\n", params.kappa);
+  printf("rho: %f\n", params.rho);
+  printf("delta: %f\n", params.delta);
+
+  printf("=================================\n");
 }
 
 Boid* themBoids = NULL; // totally safe, production level code. the array of Boid structs
@@ -152,10 +175,20 @@ void clampAtBoundaries(Boid* thisBoid, int coordIdx)
 // These functions are the forcing terms defined in problem assignment. 
 // My current idea is to calculate these on a bird to bird basis, so rather than a 
 // massive N x 2 matrix, these calculate each birds entry in that matrix.
-void foodForce(float* targetVec, const float* leaderPos) 
+void foodForce(float* targetVec, const float* leaderPos, float t) 
 {
-  float foodX = params.foodX;
-  float foodY = params.foodY;
+  float foodX, foodY;
+  if (params.foodMoves)
+  {
+    foodX = sin(params.alpha * t);
+    foodY = cos(params.alpha * t);
+  }
+  else 
+  {
+    foodX = params.foodX;
+    foodY = params.foodY;
+  }
+
   float foodPos[NUM_DIM] = {foodX, foodY};
   vectorSubtract(targetVec, &foodPos[0], leaderPos, NUM_DIM);
   vectorScalar(targetVec, params.gamma1, NUM_DIM);
@@ -196,7 +229,15 @@ void getNeighbors(int myIdx, float neighbors[NEIGHBORS][NUM_DIM], float currPosi
   float minDistances[NEIGHBORS];
   float diff, distance;
 
-  for (int nI = 0; nI < NEIGHBORS; nI++) minDistances[nI] = FLT_MAX;
+  for (int nI = 0; nI < NEIGHBORS; nI++)
+  {
+    minDistances[nI] = FLT_MAX;
+
+    for (int cI = 0; cI < NUM_DIM; cI++)
+    {
+      neighbors[nI][cI] = currPositions[myIdx][cI];
+    }
+  }
   // get distance to every bird
   for (int bI = 0; bI < params.numBirds; bI++)
   {
@@ -262,7 +303,7 @@ void getFlockAvg(float* flockAverage, float currPositions[params.numBirds][NUM_D
   vectorScalar(flockAverage, 1.0f/params.numBirds, NUM_DIM);
 }
 
-void applyForcing(float posPrime[params.numBirds][NUM_DIM], float currPositions[params.numBirds][NUM_DIM])
+void applyForcing(float posPrime[params.numBirds][NUM_DIM], float currPositions[params.numBirds][NUM_DIM], float t)
 {
   float getFood[NUM_DIM];
   float followLead[NUM_DIM];
@@ -276,6 +317,7 @@ void applyForcing(float posPrime[params.numBirds][NUM_DIM], float currPositions[
 
   leaderPos = currPositions[0];
   getFlockAvg(flockAverage, currPositions);
+  //printf("Average: %f, %f\n", flockAverage[0], flockAverage[1]);
 
   for (int bI = 0; bI < params.numBirds; bI++)
   {
@@ -287,10 +329,11 @@ void applyForcing(float posPrime[params.numBirds][NUM_DIM], float currPositions[
     myDerivative = posPrime[bI];
     zeroVec(myDerivative, NUM_DIM);
     getNeighbors(bI, neighborPositions, currPositions);
+
     if (bI == 0 && params.foodFlag) // I am leader and food flag is high
     {
       // vector steering us towards food written into getFood
-      foodForce(getFood, leaderPos);
+      foodForce(getFood, leaderPos, t);
     }
     else // I am not the leader 
     {
@@ -310,6 +353,7 @@ void applyForcing(float posPrime[params.numBirds][NUM_DIM], float currPositions[
     }
   }
 }
+
 
 // What WebGl context calls, updates our simulation internally using RK4, then updates shared memory
 EMSCRIPTEN_KEEPALIVE
@@ -333,11 +377,7 @@ void RK4(float t, float delT)
     }
   }
   // caclulate first derivative
-  applyForcing(k1, currPositions);
-  for (int bI = 0; bI < params.numBirds; bI++)
-  {
-    printf("Bird %d: (%f, %f)\n", bI, k1[bI][0], k1[bI][1]);
-  }
+  applyForcing(k1, currPositions, t);
 
   // look ahead by delT/2
   for (int bI = 0; bI < params.numBirds; bI++)
@@ -347,7 +387,7 @@ void RK4(float t, float delT)
       tempPositions[bI][cI] = currPositions[bI][cI] + (delT/2.0f) * k1[bI][cI];
     }
   }
-  applyForcing(k2, tempPositions);
+  applyForcing(k2, tempPositions, t + (delT/2.0));
 
   // look ahead by delT/2
   for (int bI = 0; bI < params.numBirds; bI++)
@@ -357,7 +397,7 @@ void RK4(float t, float delT)
       tempPositions[bI][cI] = currPositions[bI][cI] + (delT/2.0f) * k2[bI][cI];
     }
   }
-  applyForcing(k3, tempPositions);
+  applyForcing(k3, tempPositions, t + (delT/2.0));
 
   // look ahead by delT
   for (int bI = 0; bI < params.numBirds; bI++)
@@ -367,7 +407,7 @@ void RK4(float t, float delT)
       tempPositions[bI][cI] = currPositions[bI][cI] + (delT) * k3[bI][cI];
     }
   }
-  applyForcing(k4, tempPositions);
+  applyForcing(k4, tempPositions, t + delT);
   
   // finally update themBoids
   for (int bI = 0; bI < params.numBirds; bI++)
