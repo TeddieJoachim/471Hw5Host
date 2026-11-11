@@ -15,6 +15,7 @@
 
 // Necessary preprocessor directives for steering away from boundaries and staying within webgl clipping plane
 #define NUM_DIM 2
+#define NEIGHBORS 5
 #define WORLD_MIN -1.0f // thresholds for detecting collision with boundary, based on webgl vals [-1,1]
 #define WORLD_MAX 1.0f
 #define BOUNDARY_PROXIMITY_THRESHOLD 0.5f
@@ -175,7 +176,7 @@ void repulsionForces(float repulsionVecs[5][NUM_DIM], const float* myPos, const 
 {
   float numerator, denominator;
 
-  for (int nI = 0; nI < 5; nI++) 
+  for (int nI = 0; nI < NEIGHBORS; nI++) 
   {
     for (int cI = 0; cI < NUM_DIM; cI++)
     {
@@ -188,10 +189,10 @@ void repulsionForces(float repulsionVecs[5][NUM_DIM], const float* myPos, const 
 // End forcing terms
 
 
-void getNeighbors(Boid* me, float neighbors[5][NUM_DIM])
+void getNeighbors(Boid* me, float neighbors[NEIGHBORS][NUM_DIM])
 {
   float distances[params.numBirds];
-  float minDistances[5] = {FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX};
+  float minDistances[NEIGHBORS] = {FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX};
   float differenceInPos[NUM_DIM];
 
   // get distance to every bird
@@ -204,12 +205,12 @@ void getNeighbors(Boid* me, float neighbors[5][NUM_DIM])
     }
     else distances[bI] = 0;
   }
-  // now select the 5 smallest distances (excluding yourself) as neighbors
-  // for every distance, check if any of our 5 neighbors can be replaced
+  // now select the NEIGHBORS smallest distances (excluding yourself) as neighbors
+  // for every distance, check if any of our NEIGHBORS neighbors can be replaced
   for (int dI = 0; dI < params.numBirds; dI++) // for every bird/distance
   {
     if (dI == me->myIdx) continue; // skip yourself
-    for (int nI = 0; nI < 5; nI++) // for every neighbor
+    for (int nI = 0; nI < NEIGHBORS; nI++) // for every neighbor
     {
       if (distances[dI] < minDistances[nI]) // if distance to this bird is less than a previous min
       {
@@ -220,7 +221,7 @@ void getNeighbors(Boid* me, float neighbors[5][NUM_DIM])
         // eg minDist = {2, 4, 6, 8, 10}
         // new min = 1, say nI = 0 -> 
         // {2, 4, 6, 8, 8} -> {2, 4, 6, 6, 8} -> {2, 4, 4, 6, 8} -> {2, 2, 4, 6, 8} -> {1, 2, 4, 6, 8}
-        for (int shift = 4; shift > nI; shift--) 
+        for (int shift = (NEIGHBORS -1); shift > nI; shift--) 
         {
           minDistances[shift] = minDistances[shift-1];
           for (int cI = 0; cI < NUM_DIM; cI++)
@@ -256,17 +257,22 @@ void applyForcing()
   float getFood[NUM_DIM];
   float followLead[NUM_DIM];
   float cohesion[NUM_DIM];
-  float repulsion[5][NUM_DIM];
-  float neighborPositions[5][NUM_DIM];
+  float repulsion[NEIGHBORS][NUM_DIM];
+  float neighborPositions[NEIGHBORS][NUM_DIM];
   float flockAverage[NUM_DIM];
   Boid* currBird; 
   Boid* leaderBird;
 
   leaderBird = &themBoids[0];
   getFlockAvg(flockAverage);
+  zeroVec(getFood, NUM_DIM);
+  zeroVec(getFood, NUM_DIM);
+  zeroVec(followLead, NUM_DIM);
+  zeroVec(cohesion, NUM_DIM);
   for (int bI = 0; bI < params.numBirds; bI++)
   {
     currBird = &themBoids[bI];
+    zeroVec(currBird->acceleration, NUM_DIM);
     getNeighbors(currBird, neighborPositions);
     if (currBird->myIdx == 0 && params.foodFlag) // I am leader and food flag is high
     {
@@ -280,7 +286,15 @@ void applyForcing()
       cohesionForce(cohesion, currBird->position, flockAverage);
       repulsionForces(repulsion, currBird->position, neighborPositions);
     }
-    
+    // this birds acceleration is the sum of its forcing terms
+    for (int cI = 0; cI < NUM_DIM; cI++) 
+    {
+      for (int nI = 0; nI < NEIGHBORS; nI++)
+      {
+        currBird->acceleration[cI] += repulsion[nI][cI];
+      }
+      currBird->acceleration[cI] += (getFood[cI] + followLead[cI] + cohesion[cI]);
+    }
   }
 }
 
@@ -291,7 +305,11 @@ void RK4(float t, float delT)
   // in our case, B' = F -> bird velocities (position') = forcing terms
   // B(t0) = random initial positions 
   // t_0 assumed to be 0 -> t_i = h*i
-  // so our RK4 will calculate from i = 0 to n-1 (passed as arguments)
+  
+  // first we use applyForcing() to calculate every birds acceleration
+  // then we need to calculateDerivatives() of entire flock state. (calculate velocity and acceleration)
+  // do this 4 times (K terms in RK)
+  // then update positions and velocities 
 
   
   
