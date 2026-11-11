@@ -317,7 +317,6 @@ void applyForcing(float posPrime[params.numBirds][NUM_DIM], float currPositions[
 
   leaderPos = currPositions[0];
   getFlockAvg(flockAverage, currPositions);
-  //printf("Average: %f, %f\n", flockAverage[0], flockAverage[1]);
 
   for (int bI = 0; bI < params.numBirds; bI++)
   {

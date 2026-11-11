@@ -13,6 +13,18 @@
         padding: 20px;
       }
 
+      #simulation {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+      }
+
+      #simulation p {
+        text-align: center;
+        margin: 0;
+      }
+
       canvas {
         background-color: #222;
         border: 1px solid black;
@@ -45,7 +57,10 @@
   </head>
 
   <body>
-    <canvas id="gameCanvas" width="800" height="600"></canvas>
+    <div id="simulation">
+      <p>If nothing is appearing after you modify a parameter, open the console to see if it is invalid.</p>
+      <canvas id="gameCanvas" width="800" height="600"></canvas>
+    </div>
 
     <div id="controls">
       <h2>Simulation Parameters</h2>

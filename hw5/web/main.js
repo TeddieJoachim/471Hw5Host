@@ -59,10 +59,9 @@ function runGame(Module, params) {
   const delTime = 0.01; 
   let simulationTime = 0;
 
-  console.log("Initial positions:", sharedHeapCoords.slice(0, 10));
   function gameLoop() {
     Module._RK4(simulationTime, delTime) // step simulation
-    //console.log("Positions:", sharedHeapCoords.slice(0, 10));
+    
     // increment clock time (even though our ODE is not really time dependent, I'm including it for future implememtnations)
     simulationTime += delTime; 
     
@@ -70,12 +69,14 @@ function runGame(Module, params) {
     renderer.render(sharedHeapCoords, numBoids, boidDim);
 
     // next frame
-    requestAnimationFrame(gameLoop);
+    if (simulationRunning) {
+      animationId = requestAnimationFrame(gameLoop);
+    }
   }
 
 
   simulationRunning = true;
-  requestAnimationFrame(gameLoop);
+  animationId = requestAnimationFrame(gameLoop);
 }
 
 
@@ -107,6 +108,14 @@ function validateParams(params) {
 
   if (params.delta <= 0) {
     throw new Error("Delta must be positive.");
+  }
+
+  if (params.foodX < -1.0 || params.foodX > 1.0) {
+    throw new Error("Coordinates of feeder must be in [-1.0, 1.0]");
+  }
+
+  if (params.foodY < -1.0 || params.foodY > 1.0) {
+    throw new Error("Coordinates of feeder must be in [-1.0, 1.0]");
   }
 
   if (!Number.isInteger(params.numBirds) || params.numBirds < 10) {
@@ -148,9 +157,9 @@ function restartGame() {
     params.delta
   );
 
-    Module._initializeBoids();
+  Module._initializeBoids();
 
-    runGame(Module, params);
+  runGame(Module, params);
 
   } catch (error) {
     console.error("Could not restart simulation:", error);
