@@ -54,34 +54,24 @@ function runGame(Module, params) {
   }
   const renderer = new Renderer(canvas, boidDim);
 
-  const delTime = 1.0/60.0; 
-  let prevTime = null;
-  let accumulator = 0.0;
+  const delTime = 0.01; 
+  let simulationTime = 0;
 
-  // currTime is supplied by requestAnimationFrame
-  function gameLoop(currTime) {
-    if (prevTime == null) prevTime = currTime; // don't panic and update the simulation a bunch on first iteration
-    const elapsedTime = (currTime - prevTime) / 1000.0;
-    prevTime = currTime;
-
-    accumulator += elapsedTime;
-    while (accumulator >= delTime) {
-      Module._RK4(); // Update shared heap memory
-      accumulator -= delTime;
-    }
-
+  function gameLoop() {
+    Module._RK4(simulationTime, delTime) // step simulation
+    // increment clock time (even though our ODE is not really time dependent, I'm including it for future implememtnations)
+    simulationTime += delTime; 
+    
     // render using sharedHeapCoords (this is a pointer, not a copy!)
     renderer.render(sharedHeapCoords, numBoids, boidDim);
 
     // next frame
-    if (simulationRunning) {
-      animationId = requestAnimationFrame(gameLoop);
-    }
+    requestAnimationFrame(gameLoop);
   }
 
 
   simulationRunning = true;
-  animationId = requestAnimationFrame(gameLoop);
+  requestAnimationFrame(gameLoop);
 }
 
 

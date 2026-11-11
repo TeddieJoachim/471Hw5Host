@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <float.h>
+#include <math.h>
 #include "vector.h"
 #include "boids.h"
 
@@ -189,19 +190,25 @@ void repulsionForces(float repulsionVecs[5][NUM_DIM], const float* myPos, const 
 // End forcing terms
 
 
-void getNeighbors(Boid* me, float neighbors[NEIGHBORS][NUM_DIM])
+void getNeighbors(int myIdx, float neighbors[NEIGHBORS][NUM_DIM], float currPositions[params.numBirds][NUM_DIM])
 {
   float distances[params.numBirds];
-  float minDistances[NEIGHBORS] = {FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX, FLT_MAX};
-  float differenceInPos[NUM_DIM];
+  float minDistances[NEIGHBORS];
+  float diff, distance;
 
+  for (int nI = 0; nI < NEIGHBORS; nI++) minDistances[nI] = FLT_MAX;
   // get distance to every bird
   for (int bI = 0; bI < params.numBirds; bI++)
   {
-    if (themBoids[bI].myIdx != me->myIdx) 
+    distance = 0.0f;
+    if (bI != myIdx) 
     {
-      vectorSubtract(differenceInPos, me->position, themBoids[bI].position, NUM_DIM);
-      distances[bI] = vecMagnitude(differenceInPos, NUM_DIM);
+      for (int cI = 0; cI < NUM_DIM; cI++)
+      {
+        diff = currPositions[myIdx][cI] - currPositions[bI][cI];
+        distance += diff * diff;
+      }
+      distances[bI] = sqrtf(distance);
     }
     else distances[bI] = 0;
   }
@@ -209,7 +216,7 @@ void getNeighbors(Boid* me, float neighbors[NEIGHBORS][NUM_DIM])
   // for every distance, check if any of our NEIGHBORS neighbors can be replaced
   for (int dI = 0; dI < params.numBirds; dI++) // for every bird/distance
   {
-    if (dI == me->myIdx) continue; // skip yourself
+    if (dI == myIdx) continue; // skip yourself
     for (int nI = 0; nI < NEIGHBORS; nI++) // for every neighbor
     {
       if (distances[dI] < minDistances[nI]) // if distance to this bird is less than a previous min
@@ -232,7 +239,7 @@ void getNeighbors(Boid* me, float neighbors[NEIGHBORS][NUM_DIM])
         minDistances[nI] = distances[dI];
         for (int cI = 0; cI < NUM_DIM; cI++) // write this birds coordinates into this neighbors
         {
-          neighbors[nI][cI] = themBoids[dI].position[cI];
+          neighbors[nI][cI] = currPositions[dI][cI];
         }
         break; // found a new neighbor
       }
@@ -241,18 +248,21 @@ void getNeighbors(Boid* me, float neighbors[NEIGHBORS][NUM_DIM])
 
 }
 
-void getFlockAvg(float* flockAverage)
+void getFlockAvg(float* flockAverage, float currPositions[params.numBirds][NUM_DIM])
 {
   zeroVec(flockAverage, NUM_DIM);
   
   for (int bI = 0; bI < params.numBirds; bI++)
   {
-    vectorAdd(flockAverage, themBoids[bI].position, flockAverage, NUM_DIM);
+    for (int cI = 0; cI < NUM_DIM; cI++)
+    {
+      flockAverage[cI] += currPositions[bI][cI];
+    }
   }
-  vectorScalar(flockAverage, 1.0/params.numBirds, NUM_DIM);
+  vectorScalar(flockAverage, 1.0f/params.numBirds, NUM_DIM);
 }
 
-void applyForcing()
+void applyForcing(float posPrime[params.numBirds][NUM_DIM], float currPositions[params.numBirds][NUM_DIM])
 {
   float getFood[NUM_DIM];
   float followLead[NUM_DIM];
@@ -260,40 +270,43 @@ void applyForcing()
   float repulsion[NEIGHBORS][NUM_DIM];
   float neighborPositions[NEIGHBORS][NUM_DIM];
   float flockAverage[NUM_DIM];
-  Boid* currBird; 
-  Boid* leaderBird;
+  float* myPos;
+  float* myDerivative; 
+  float* leaderPos;
 
-  leaderBird = &themBoids[0];
-  getFlockAvg(flockAverage);
-  zeroVec(getFood, NUM_DIM);
-  zeroVec(getFood, NUM_DIM);
-  zeroVec(followLead, NUM_DIM);
-  zeroVec(cohesion, NUM_DIM);
+  leaderPos = currPositions[0];
+  getFlockAvg(flockAverage, currPositions);
+
   for (int bI = 0; bI < params.numBirds; bI++)
   {
-    currBird = &themBoids[bI];
-    zeroVec(currBird->acceleration, NUM_DIM);
-    getNeighbors(currBird, neighborPositions);
-    if (currBird->myIdx == 0 && params.foodFlag) // I am leader and food flag is high
+    zeroVec(getFood, NUM_DIM);
+    zeroVec(followLead, NUM_DIM);
+    zeroVec(cohesion, NUM_DIM);
+    for (int nI = 0; nI < NEIGHBORS; nI++) zeroVec(repulsion[nI], NUM_DIM);
+    myPos = currPositions[bI];
+    myDerivative = posPrime[bI];
+    zeroVec(myDerivative, NUM_DIM);
+    getNeighbors(bI, neighborPositions, currPositions);
+    if (bI == 0 && params.foodFlag) // I am leader and food flag is high
     {
       // vector steering us towards food written into getFood
-      foodForce(getFood, leaderBird->position);
+      foodForce(getFood, leaderPos);
     }
     else // I am not the leader 
     {
       // vectors steering us in the forcing directions
-      leaderForce(followLead, leaderBird->position, currBird->position);
-      cohesionForce(cohesion, currBird->position, flockAverage);
-      repulsionForces(repulsion, currBird->position, neighborPositions);
+      leaderForce(followLead, leaderPos, myPos);
+      cohesionForce(cohesion, myPos, flockAverage);
+      repulsionForces(repulsion, myPos, neighborPositions);
     }
     // this birds acceleration is the sum of its forcing terms
     for (int cI = 0; cI < NUM_DIM; cI++) 
     {
       for (int nI = 0; nI < NEIGHBORS; nI++)
       {
-        currBird->acceleration[cI] += repulsion[nI][cI];
+        myDerivative[cI] += repulsion[nI][cI];
       }
-      currBird->acceleration[cI] += (getFood[cI] + followLead[cI] + cohesion[cI]);
+      myDerivative[cI] += (getFood[cI] + followLead[cI] + cohesion[cI]);
     }
   }
 }
@@ -302,17 +315,77 @@ void applyForcing()
 EMSCRIPTEN_KEEPALIVE
 void RK4(float t, float delT)
 {
-  // in our case, B' = F -> bird velocities (position') = forcing terms
-  // B(t0) = random initial positions 
-  // t_0 assumed to be 0 -> t_i = h*i
-  
-  // first we use applyForcing() to calculate every birds acceleration
-  // then we need to calculateDerivatives() of entire flock state. (calculate velocity and acceleration)
-  // do this 4 times (K terms in RK)
-  // then update positions and velocities 
+  float currPositions[params.numBirds][NUM_DIM]; // a snapshot of current state
 
+  float k1[params.numBirds][NUM_DIM]; // estimates of derivatives
+  float k2[params.numBirds][NUM_DIM];
+  float k3[params.numBirds][NUM_DIM];
+  float k4[params.numBirds][NUM_DIM];
+  float tempPositions[params.numBirds][NUM_DIM]; // for intermediate evaluations
+  float newPos;
+
+  // take snapshot
+  for (int bI = 0; bI < params.numBirds; bI++)
+  {
+    for (int cI = 0; cI < NUM_DIM; cI++)
+    {
+      currPositions[bI][cI] = themBoids[bI].position[cI];
+    }
+  }
+  // caclulate first derivative
+  applyForcing(k1, currPositions);
+  for (int bI = 0; bI < params.numBirds; bI++)
+  {
+    printf("Bird %d: (%f, %f)\n", bI, k1[bI][0], k1[bI][1]);
+  }
+
+  // look ahead by delT/2
+  for (int bI = 0; bI < params.numBirds; bI++)
+  {
+    for (int cI = 0; cI < NUM_DIM; cI++)
+    {
+      tempPositions[bI][cI] = currPositions[bI][cI] + (delT/2.0f) * k1[bI][cI];
+    }
+  }
+  applyForcing(k2, tempPositions);
+
+  // look ahead by delT/2
+  for (int bI = 0; bI < params.numBirds; bI++)
+  {
+    for (int cI = 0; cI < NUM_DIM; cI++)
+    {
+      tempPositions[bI][cI] = currPositions[bI][cI] + (delT/2.0f) * k2[bI][cI];
+    }
+  }
+  applyForcing(k3, tempPositions);
+
+  // look ahead by delT
+  for (int bI = 0; bI < params.numBirds; bI++)
+  {
+    for (int cI = 0; cI < NUM_DIM; cI++)
+    {
+      tempPositions[bI][cI] = currPositions[bI][cI] + (delT) * k3[bI][cI];
+    }
+  }
+  applyForcing(k4, tempPositions);
   
-  
+  // finally update themBoids
+  for (int bI = 0; bI < params.numBirds; bI++)
+  {
+    for (int cI = 0; cI < NUM_DIM; cI++)
+    {
+      newPos = currPositions[bI][cI] + (delT / 6.0f) * (k1[bI][cI] + 2.0f * k2[bI][cI] + 2.0f * k3[bI][cI] + k4[bI][cI]);
+      themBoids[bI].position[cI] = newPos;
+    }
+  }
+
+  for (int bI = 0; bI < params.numBirds; bI++) 
+  {
+    for (int cI = 0; cI < NUM_DIM; cI++)
+    {
+      boidSharedPositions[bI * NUM_DIM + cI] = themBoids[bI].position[cI];
+    }
+  }
 }
 
 
