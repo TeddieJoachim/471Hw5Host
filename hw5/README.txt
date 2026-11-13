@@ -4,7 +4,7 @@ README file for Homework 5, Math 471, Fall 2026, J. Schroder
 
 - The homework report is in the directory hw5/report and is called hw5.pdf. Also
 contained in that directory is the LaTex file required for compilation, as well as ...                    TODO
-m
+m2
 - The code directory contains                                                                             TODO
 
 - This project was written primarily in C, and the emscripten compiler was used to create a 
