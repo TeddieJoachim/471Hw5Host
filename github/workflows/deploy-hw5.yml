@@ -3,8 +3,7 @@ name: Deploy hw5 to GitHub Pages
 on:
   push:
     branches: [ main ]
-    paths:
-      - 'hw5/**'
+  workflow_dispatch:
 
 permissions:
   contents: read
