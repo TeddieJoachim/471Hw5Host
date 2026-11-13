@@ -126,13 +126,13 @@ void initializeBoids()
 
 
 // decrements acceleration in direction of walls when applicable
-void avoidBoundaries(Boid* thisBoid)
+void avoidBoundaries(float* targetVec, const float* birdPos)
 {
   float distToMax, distToMin;
   for (int coordIdx = 0; coordIdx < NUM_DIM; coordIdx++)
   {
-    distToMax = WORLD_MAX - thisBoid->position[coordIdx];
-    distToMin = thisBoid->position[coordIdx] - WORLD_MIN;
+    distToMax = WORLD_MAX - birdPos[coordIdx];
+    distToMin = birdPos[coordIdx] - WORLD_MIN;
 
     // if we are within a threshold (about to hit wall) decelerate in that direction proportionally to how close we are
     // so the larger distToMax is, the smaller the steering force. (THRESHOLD - distToMax) = how far we are into the threshold
@@ -140,34 +140,25 @@ void avoidBoundaries(Boid* thisBoid)
     // (if we are 0.5 into the boundary, we get 1.0, if 0.25 we get 0.5, makes it easy to tune with boundary weight)
     if (distToMax < BOUNDARY_PROXIMITY_THRESHOLD)
     {
-      thisBoid->acceleration[coordIdx] -= BOUNDARY_WEIGHT * (BOUNDARY_PROXIMITY_THRESHOLD - distToMax) / BOUNDARY_PROXIMITY_THRESHOLD;
+      targetVec[coordIdx] -= BOUNDARY_WEIGHT * (BOUNDARY_PROXIMITY_THRESHOLD - distToMax) / BOUNDARY_PROXIMITY_THRESHOLD;
     }
     else if (distToMin < BOUNDARY_PROXIMITY_THRESHOLD)
     {
-      thisBoid->acceleration[coordIdx] += BOUNDARY_WEIGHT * (BOUNDARY_PROXIMITY_THRESHOLD - distToMin) / BOUNDARY_PROXIMITY_THRESHOLD;
+      targetVec[coordIdx] += BOUNDARY_WEIGHT * (BOUNDARY_PROXIMITY_THRESHOLD - distToMin) / BOUNDARY_PROXIMITY_THRESHOLD;
     }
   }
 }
 
 // Don't let birds leave boundaries. If hit, set to boundary and ensure they aren't travelling out by zeroing that coordIdx
-void clampAtBoundaries(Boid* thisBoid, int coordIdx)
+void clampAtBoundaries(float* thisPosition, int coordIdx)
 {
-  if (thisBoid->position[coordIdx] > WORLD_MAX)
+  if (thisPosition[coordIdx] > WORLD_MAX)
   {
-    thisBoid->position[coordIdx] = WORLD_MAX;
-    if (thisBoid->velocity[coordIdx] > 0.0f) 
-    {
-      thisBoid->velocity[coordIdx] = 0.0f;
-    }
+    thisPosition[coordIdx] = WORLD_MAX;
   }
-  else if (thisBoid->position[coordIdx] < WORLD_MIN)
+  else if (thisPosition[coordIdx] < WORLD_MIN)
   {
-    thisBoid->position[coordIdx] = WORLD_MIN;
-
-    if (thisBoid->velocity[coordIdx] < 0.0f) 
-    {
-      thisBoid->velocity[coordIdx] = 0.0f;
-    }
+    thisPosition[coordIdx] = WORLD_MIN;
   }
 }
 
@@ -311,6 +302,8 @@ void applyForcing(float posPrime[params.numBirds][NUM_DIM], float currPositions[
   float repulsion[NEIGHBORS][NUM_DIM];
   float neighborPositions[NEIGHBORS][NUM_DIM];
   float flockAverage[NUM_DIM];
+  float boundaryForce[NUM_DIM];
+  float predatorForce[NUM_DIM];
   float* myPos;
   float* myDerivative; 
   float* leaderPos;
@@ -325,8 +318,10 @@ void applyForcing(float posPrime[params.numBirds][NUM_DIM], float currPositions[
     zeroVec(cohesion, NUM_DIM);
     for (int nI = 0; nI < NEIGHBORS; nI++) zeroVec(repulsion[nI], NUM_DIM);
     myPos = currPositions[bI];
-    myDerivative = posPrime[bI];
+    myDerivative = posPrime[bI]; // memory we will update
     zeroVec(myDerivative, NUM_DIM);
+    zeroVec(boundaryForce, NUM_DIM);
+    zeroVec(predatorForce, NUM_DIM);
     getNeighbors(bI, neighborPositions, currPositions);
 
     if (bI == 0 && params.foodFlag) // I am leader and food flag is high
@@ -341,6 +336,10 @@ void applyForcing(float posPrime[params.numBirds][NUM_DIM], float currPositions[
       cohesionForce(cohesion, myPos, flockAverage);
       repulsionForces(repulsion, myPos, neighborPositions);
     }
+    // either way ensure i do not leave the clipping plane
+    avoidBoundaries(boundaryForce, myPos);
+    // also everyone steers away from the predator except the predator                                        TODO
+    
     // this birds acceleration is the sum of its forcing terms
     for (int cI = 0; cI < NUM_DIM; cI++) 
     {
@@ -348,7 +347,8 @@ void applyForcing(float posPrime[params.numBirds][NUM_DIM], float currPositions[
       {
         myDerivative[cI] += repulsion[nI][cI];
       }
-      myDerivative[cI] += (getFood[cI] + followLead[cI] + cohesion[cI]);
+      myDerivative[cI] += (getFood[cI] + followLead[cI] + cohesion[cI] + boundaryForce[cI] + predatorForce[cI]);
+      clampAtBoundaries(myDerivative, cI);
     }
   }
 }
