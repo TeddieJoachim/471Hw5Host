@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
     paths:
-      - 'hw5/web/**'
+      - 'hw5/**'
 
 permissions:
   contents: read
@@ -25,7 +25,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'hw5/web'
+          path: 'hw5'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
