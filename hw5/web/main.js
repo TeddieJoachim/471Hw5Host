@@ -19,6 +19,7 @@ async function startGame() {
   validateParams(params);
   Module._setParameters(
     params.numBirds,
+    params.isPred ? 1: 0,
     params.foodMoves ? 1 : 0,
     params.foodFlag ? 1 : 0,
     params.foodX,
@@ -66,7 +67,7 @@ function runGame(Module, params) {
     simulationTime += delTime; 
     
     // render using sharedHeapCoords (this is a pointer, not a copy!)
-    renderer.render(sharedHeapCoords, numBoids, boidDim);
+    renderer.render(sharedHeapCoords, numBoids, boidDim, params.isPred);
 
     // next frame
     if (simulationRunning) {
@@ -83,6 +84,7 @@ function runGame(Module, params) {
 function getParams() {
   return {
     foodFlag: document.getElementById("foodFlag").checked,
+    isPred: document.getElementById("isPred").checked,
     foodMoves: document.getElementById("foodMoves").checked,
     alpha: Number(document.getElementById("alpha").value),
     foodX: Number(document.getElementById("foodX").value),
@@ -145,6 +147,7 @@ function restartGame() {
 
   Module._setParameters(
     params.numBirds,
+    params.isPred ? 1: 0,
     params.foodMoves ? 1 : 0,
     params.foodFlag ? 1 : 0,
     params.foodX,

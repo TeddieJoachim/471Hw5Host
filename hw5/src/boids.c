@@ -28,9 +28,10 @@
 Parameters params;
 
 EMSCRIPTEN_KEEPALIVE
-void setParameters(int numBirds, int foodMoves, int foodFlag, float foodX, float foodY, double alpha, double gamma1, double gamma2, double kappa, double rho, double delta) 
+void setParameters(int numBirds, int isPred, int foodMoves, int foodFlag, float foodX, float foodY, double alpha, double gamma1, double gamma2, double kappa, double rho, double delta) 
 {
   params.numBirds = numBirds;
+  params.isPred = isPred;
   params.foodMoves = foodMoves;
   params.foodFlag = foodFlag;
   params.alpha = alpha;
@@ -211,6 +212,17 @@ void repulsionForces(float repulsionVecs[5][NUM_DIM], const float* myPos, const 
     }
   }
 }
+
+void predatorForce(float* predVec, const float* predatorPos, const float* myPos)
+{
+  // like the leader force but in reverse
+  vectorSubtract(predVec, myPos, predatorPos, NUM_DIM);
+  float minDistance = 0.1f; // could use delta here but that is gettign a little small
+  float distance = vecMagnitude(predVec, NUM_DIM);
+  if (distance < minDistance) distance = minDistance;
+
+  vectorScalar(predVec, (params.gamma2+0.5) / distance, NUM_DIM);
+}
 // End forcing terms
 
 
@@ -303,12 +315,14 @@ void applyForcing(float posPrime[params.numBirds][NUM_DIM], float currPositions[
   float neighborPositions[NEIGHBORS][NUM_DIM];
   float flockAverage[NUM_DIM];
   float boundaryForce[NUM_DIM];
-  float predatorForce[NUM_DIM];
+  float predator[NUM_DIM];
   float* myPos;
   float* myDerivative; 
   float* leaderPos;
+  float* predatorPos;
 
   leaderPos = currPositions[0];
+  predatorPos = currPositions[params.numBirds - 1];
   getFlockAvg(flockAverage, currPositions);
 
   for (int bI = 0; bI < params.numBirds; bI++)
@@ -321,7 +335,7 @@ void applyForcing(float posPrime[params.numBirds][NUM_DIM], float currPositions[
     myDerivative = posPrime[bI]; // memory we will update
     zeroVec(myDerivative, NUM_DIM);
     zeroVec(boundaryForce, NUM_DIM);
-    zeroVec(predatorForce, NUM_DIM);
+    zeroVec(predator, NUM_DIM);
     getNeighbors(bI, neighborPositions, currPositions);
 
     if (bI == 0 && params.foodFlag) // I am leader and food flag is high
@@ -329,17 +343,17 @@ void applyForcing(float posPrime[params.numBirds][NUM_DIM], float currPositions[
       // vector steering us towards food written into getFood
       foodForce(getFood, leaderPos, t);
     }
-    else // I am not the leader 
+    else // I am not the leader. if i am a predator, i steer like the others, and they steer away from me
     {
       // vectors steering us in the forcing directions
       leaderForce(followLead, leaderPos, myPos);
       cohesionForce(cohesion, myPos, flockAverage);
       repulsionForces(repulsion, myPos, neighborPositions);
     }
-    // either way ensure i do not leave the clipping plane
+    // either way try to ensure i do not leave the clipping plane
     avoidBoundaries(boundaryForce, myPos);
-    // also everyone steers away from the predator except the predator                                        TODO
-    
+    if (bI != (params.numBirds - 1) && params.isPred) predatorForce(predator, predatorPos, myPos); // if not predator, avoid predator, else predator behaves like regular bird
+
     // this birds acceleration is the sum of its forcing terms
     for (int cI = 0; cI < NUM_DIM; cI++) 
     {
@@ -347,7 +361,7 @@ void applyForcing(float posPrime[params.numBirds][NUM_DIM], float currPositions[
       {
         myDerivative[cI] += repulsion[nI][cI];
       }
-      myDerivative[cI] += (getFood[cI] + followLead[cI] + cohesion[cI] + boundaryForce[cI] + predatorForce[cI]);
+      myDerivative[cI] += (getFood[cI] + followLead[cI] + cohesion[cI] + boundaryForce[cI] + predator[cI]);
       clampAtBoundaries(myDerivative, cI);
     }
   }

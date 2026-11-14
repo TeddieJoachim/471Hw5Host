@@ -40,7 +40,7 @@ export class Renderer {
     gl.enableVertexAttribArray(this.colorAttributeLocation);
   }
 
-render(boidPositions, numBoids, boidDim) {
+render(boidPositions, numBoids, boidDim, isPred) {
   const gl = this.gl;
 
   gl.clearColor(0, 0, 0, 1);
@@ -59,7 +59,7 @@ render(boidPositions, numBoids, boidDim) {
     if (idx === 0) {
       colors.set([0, 0, 1, 1], idx * 4);
     }
-    else if (idx === numBoids - 1) {
+    else if (idx === numBoids - 1 && isPred) {
       colors.set([1, 0, 0, 1], idx * 4);
     }
     else {
