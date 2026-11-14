@@ -23,6 +23,7 @@ typedef struct Parameters {
   double delta;
 } Parameters;
 
+
 // Sets parameters as passed in from user
 void setParameters(int numBirds, int isPred, int foodMoves, int foodFlag, float foodX, float foodY, double alpha, double gamma1, double gamma2, double kappa, double rho, double delta);
 // MALLOCS Boids and their fields as well as shared boidPositions, and assigns initial values. Sets positions to random coordinates.

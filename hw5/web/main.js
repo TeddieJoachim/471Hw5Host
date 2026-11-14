@@ -133,8 +133,26 @@ function stopGame() {
 
   if (simulationRunning) {
     simulationRunning = false;
+    //Module._stopDiagnostics();
+    //downloadDiagnostics(Module);
     Module._freeBoids();
   }
+}
+
+function downloadDiagnostics(Module) {
+  const contents = Module.FS.readFile("/forces.csv", {
+    encoding: "utf8"
+  });
+
+  const blob = new Blob([contents], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = "forces.csv";
+  link.click();
+
+  URL.revokeObjectURL(url);
 }
 
 function restartGame() {

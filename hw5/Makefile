@@ -7,7 +7,7 @@ EMCC = emcc
 # -sMODULARIZE=1 wraps the generated javascript in a function that can generate the module
 # -sEXPORTED_RUNTIME_METHODS=HEAPU8 gives us access to shared heap memory
 # -sEXPORT_NAME names the function that will load the module
-CFLAGS = -lm -Wall -O2 -sMODULARIZE=1 -sEXPORTED_RUNTIME_METHODS=HEAPU8 -sEXPORT_NAME=createWASMModule 
+CFLAGS = -lm -Wall -O2 -sFORCE_FILESYSTEM=1 -sMODULARIZE=1 -sEXPORTED_RUNTIME_METHODS=HEAPU8,FS -sEXPORT_NAME=createWASMModule 
 
 TARGET = build/boidRunner.js
 

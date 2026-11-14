@@ -68,7 +68,28 @@ void printParameters()
 
 Boid* themBoids = NULL; // totally safe, production level code. the array of Boid structs
 float* boidSharedPositions = NULL; // shared heap memory between WebGl and this program
+FILE* diagnosticFile = NULL;
 
+void startDiagnostics()
+{
+  diagnosticFile = fopen("/forces.csv", "w");
+
+  if (diagnosticFile == NULL) {
+    printf("Failed to open diagnostics file\n");
+    return;
+  }
+
+  fprintf(diagnosticFile,"time,bird_id,follow,cohesion,repulsion,predator\n");
+}
+
+EMSCRIPTEN_KEEPALIVE
+void stopDiagnostics()
+{
+  if (diagnosticFile != NULL) {
+    fclose(diagnosticFile);
+    diagnosticFile = NULL;
+  }
+}
 // rand() returns a "random" float from 0 to some big fuckin number. if we want to clamp it between 
 // min and max we need to do some arithmetic
 float randomInRange(float min, float max) 
@@ -85,7 +106,7 @@ EMSCRIPTEN_KEEPALIVE
 void initializeBoids()
 {
   int bI = 0;
-
+  //startDiagnostics(); //all relevant functions should be commented out so that visitors of site don't get massive CSV files downloaded automatically
   srand((unsigned int)time(NULL)); // seeds rand, have to cast the current time (time(NULL)) to unsigned int
   themBoids = malloc(params.numBirds * sizeof(Boid));
   boidSharedPositions = malloc(params.numBirds * NUM_DIM * sizeof(float));
@@ -306,7 +327,7 @@ void getFlockAvg(float* flockAverage, float currPositions[params.numBirds][NUM_D
   vectorScalar(flockAverage, 1.0f/params.numBirds, NUM_DIM);
 }
 
-void applyForcing(float posPrime[params.numBirds][NUM_DIM], float currPositions[params.numBirds][NUM_DIM], float t)
+void applyForcing(float posPrime[params.numBirds][NUM_DIM], float currPositions[params.numBirds][NUM_DIM], float t, int record)
 {
   float getFood[NUM_DIM];
   float followLead[NUM_DIM];
@@ -355,14 +376,34 @@ void applyForcing(float posPrime[params.numBirds][NUM_DIM], float currPositions[
     if (bI != (params.numBirds - 1) && params.isPred) predatorForce(predator, predatorPos, myPos); // if not predator, avoid predator, else predator behaves like regular bird
 
     // this birds acceleration is the sum of its forcing terms
+    float repulsionTotal[NUM_DIM];
+    zeroVec(repulsionTotal, NUM_DIM);
     for (int cI = 0; cI < NUM_DIM; cI++) 
     {
       for (int nI = 0; nI < NEIGHBORS; nI++)
       {
         myDerivative[cI] += repulsion[nI][cI];
+        repulsionTotal[cI] += repulsion[nI][cI];
       }
       myDerivative[cI] += (getFood[cI] + followLead[cI] + cohesion[cI] + boundaryForce[cI] + predator[cI]);
       clampAtBoundaries(myDerivative, cI);
+    }
+
+    if (record)
+    {
+      float followMag = vecMagnitude(followLead, NUM_DIM);
+      float cohesionMag = vecMagnitude(cohesion, NUM_DIM);
+      float repulsionMag = vecMagnitude(repulsionTotal, NUM_DIM);
+      float predatorMag = vecMagnitude(predator, NUM_DIM);
+
+      fprintf(diagnosticFile,
+      "%.6f, %d, %.6f, %.6f, %.6f, %.6f\n",
+      t,
+      bI,
+      followMag,
+      cohesionMag,
+      repulsionMag,
+      predatorMag);
     }
   }
 }
@@ -390,7 +431,7 @@ void RK4(float t, float delT)
     }
   }
   // caclulate first derivative
-  applyForcing(k1, currPositions, t);
+  applyForcing(k1, currPositions, t, 1);
 
   // look ahead by delT/2
   for (int bI = 0; bI < params.numBirds; bI++)
@@ -400,7 +441,7 @@ void RK4(float t, float delT)
       tempPositions[bI][cI] = currPositions[bI][cI] + (delT/2.0f) * k1[bI][cI];
     }
   }
-  applyForcing(k2, tempPositions, t + (delT/2.0));
+  applyForcing(k2, tempPositions, t + (delT/2.0), 0);
 
   // look ahead by delT/2
   for (int bI = 0; bI < params.numBirds; bI++)
@@ -410,7 +451,7 @@ void RK4(float t, float delT)
       tempPositions[bI][cI] = currPositions[bI][cI] + (delT/2.0f) * k2[bI][cI];
     }
   }
-  applyForcing(k3, tempPositions, t + (delT/2.0));
+  applyForcing(k3, tempPositions, t + (delT/2.0), 1);
 
   // look ahead by delT
   for (int bI = 0; bI < params.numBirds; bI++)
@@ -420,7 +461,7 @@ void RK4(float t, float delT)
       tempPositions[bI][cI] = currPositions[bI][cI] + (delT) * k3[bI][cI];
     }
   }
-  applyForcing(k4, tempPositions, t + delT);
+  applyForcing(k4, tempPositions, t + delT, 0);
   
   // finally update themBoids
   for (int bI = 0; bI < params.numBirds; bI++)
