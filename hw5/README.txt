@@ -3,9 +3,14 @@ README file for Homework 5, Math 471, Fall 2026, J. Schroder
 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 - The homework report is in the directory hw5/report and is called hw5.pdf. Also
-contained in that directory is the LaTex file required for compilation, as well as ...                    TODO
-m2
-- The code directory contains                                                                             TODO
+contained in that directory is the LaTex file required for compilation, as well as 
+the plot of the magnitudes of the simulation forces that the latex requires. 
+
+- The src directory contains our C implementation of RK4 in the file boids.c. The web directory contains the 
+javascript/webgl environment used for rendering, the plotting directory contains three CSV files and a python 
+script for plotting. To reproduce our plot, simply run: python3 plotter.py from within this directory. The build
+directory can be ignored by the user as it contains the generated webassembly and javascript that the emscripten 
+compiler generates using our C code. These files should never be edited manually.
 
 - This project was written primarily in C, and the emscripten compiler was used to create a 
 webassembly module and corresponding javascript file that allows our C code to be run in the browser.
